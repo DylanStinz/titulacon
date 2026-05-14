@@ -4,40 +4,75 @@ from models.schemasModel import UsuarioSchema
 from pydantic import ValidationError
 
 class AuthController:
+
     def __init__(self):
         self.model = UsuarioModel()
-        
-    def registrar_usuario(self, nombre, apellido, email, password):
+
+
+    def registrar_usuario(
+        self,
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        correo,
+        usuario,
+        password
+    ):
+
         try:
+
             hashed_password = bcrypt.hashpw(
-                password.encode('utf-8'),
+                password.encode("utf-8"),
                 bcrypt.gensalt()
-            ).decode('utf-8')
+            ).decode("utf-8")
 
             nuevo_usuario = UsuarioSchema(
+
                 nombre=nombre,
-                apellido=apellido,
-                email=email,
-                password=hashed_password
+                apellido_paterno=apellido_paterno,
+                apellido_materno=apellido_materno,
+                correo=correo,
+                usuario=usuario,
+                contraseña=hashed_password
             )
 
             success = self.model.registrar(nuevo_usuario)
-            return success, "Usuario registrado exitosamente." 
+
+            if success:
+                return True, "Usuario registrado correctamente"
+
+            return False, "No se pudo registrar"
 
         except ValidationError as e:
-            return False, e.errors()[0]['msg']
+            return False, e.errors()[0]["msg"]
 
-    def login(self, email, password):
-        user = self.model.validar_login(email, password)
-        
+        except Exception as e:
+            return False, str(e)
+
+    def login(self, usuario, password):
+
+        user = self.model.validar_login(usuario)
+
         if not user:
-            return None, "Credenciales incorrectas"
 
-       
-        usuario = {
-            "id": user["id_usuario"],  
+            return None, "Usuario incorrecto"
+
+        if not bcrypt.checkpw(
+
+            password.encode("utf-8"),
+            user["contraseña"].encode("utf-8")
+
+        ):
+
+            return None, "Contraseña incorrecta"
+
+        usuario_data = {
+
+            "id": user["id_docente"],
             "nombre": user["nombre"],
-            "email": user["email"]
+            "correo": user["correo"],
+            "usuario": user["usuario"]
+
         }
 
-        return usuario, "Login exitoso"
+        return usuario_data, "Login exitoso"

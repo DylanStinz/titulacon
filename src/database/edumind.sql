@@ -1,161 +1,342 @@
--- --------------------------------------------------------
--- Host:                         127.0.0.1
--- Versión del servidor:         8.0.31 - MySQL Community Server - GPL
--- SO del servidor:              Win64
--- HeidiSQL Versión:             12.8.0.6908
--- --------------------------------------------------------
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 14-05-2026 a las 07:22:46
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET NAMES utf8 */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
+--
+-- Base de datos: `edumind`
+--
 
--- Volcando estructura de base de datos para edumind
-CREATE DATABASE IF NOT EXISTS `edumind` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `edumind`;
+-- --------------------------------------------------------
 
--- Volcando estructura para tabla edumind.alumnos
-CREATE TABLE IF NOT EXISTS `alumnos` (
-  `id_alumno` int NOT NULL AUTO_INCREMENT,
+--
+-- Estructura de tabla para la tabla `alumnos`
+--
+
+CREATE TABLE `alumnos` (
+  `id_alumno` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
   `apellido_paterno` varchar(100) NOT NULL,
   `apellido_materno` varchar(100) DEFAULT NULL,
   `matricula` varchar(30) NOT NULL,
   `grupo` varchar(20) NOT NULL,
-  `semestre` int NOT NULL,
+  `semestre` int(11) NOT NULL,
   `especialidad` varchar(100) DEFAULT NULL,
   `fecha_nacimiento` date DEFAULT NULL,
   `telefono` varchar(20) DEFAULT NULL,
-  `direccion` text,
-  `estatus` enum('Activo','Reprobado','Baja') DEFAULT 'Activo',
-  PRIMARY KEY (`id_alumno`),
-  UNIQUE KEY `matricula` (`matricula`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `direccion` text DEFAULT NULL,
+  `estatus` enum('Activo','Reprobado','Baja') DEFAULT 'Activo'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.alumnos: 0 rows
-/*!40000 ALTER TABLE `alumnos` DISABLE KEYS */;
-/*!40000 ALTER TABLE `alumnos` ENABLE KEYS */;
+-- --------------------------------------------------------
 
--- Volcando estructura para tabla edumind.asistencias
-CREATE TABLE IF NOT EXISTS `asistencias` (
-  `id_asistencia` int NOT NULL AUTO_INCREMENT,
-  `id_alumno` int NOT NULL,
+--
+-- Estructura de tabla para la tabla `asistencias`
+--
+
+CREATE TABLE `asistencias` (
+  `id_asistencia` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
   `fecha` date NOT NULL,
-  `estado` enum('Asistió','Falta','Retardo') NOT NULL,
-  PRIMARY KEY (`id_asistencia`),
-  KEY `fk_asistencia_alumno` (`id_alumno`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `estado` enum('Asistió','Falta','Retardo') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.asistencias: 0 rows
-/*!40000 ALTER TABLE `asistencias` DISABLE KEYS */;
-/*!40000 ALTER TABLE `asistencias` ENABLE KEYS */;
+-- --------------------------------------------------------
 
--- Volcando estructura para tabla edumind.calificaciones
-CREATE TABLE IF NOT EXISTS `calificaciones` (
-  `id_calificacion` int NOT NULL AUTO_INCREMENT,
-  `id_alumno` int NOT NULL,
-  `id_materia` int NOT NULL,
-  `parcial` int NOT NULL,
+--
+-- Estructura de tabla para la tabla `calificaciones`
+--
+
+CREATE TABLE `calificaciones` (
+  `id_calificacion` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
+  `id_materia` int(11) NOT NULL,
+  `parcial` int(11) NOT NULL,
   `calificacion` decimal(4,2) NOT NULL,
-  `fecha_registro` date DEFAULT NULL,
-  PRIMARY KEY (`id_calificacion`),
-  KEY `fk_calificacion_alumno` (`id_alumno`),
-  KEY `fk_calificacion_materia` (`id_materia`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `fecha_registro` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.calificaciones: 0 rows
-/*!40000 ALTER TABLE `calificaciones` DISABLE KEYS */;
-/*!40000 ALTER TABLE `calificaciones` ENABLE KEYS */;
+-- --------------------------------------------------------
 
--- Volcando estructura para tabla edumind.docentes
-CREATE TABLE IF NOT EXISTS `docentes` (
-  `id_docente` int NOT NULL AUTO_INCREMENT,
+--
+-- Estructura de tabla para la tabla `docentes`
+--
+
+CREATE TABLE `docentes` (
+  `id_docente` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
   `apellido_paterno` varchar(100) NOT NULL,
   `apellido_materno` varchar(100) DEFAULT NULL,
   `correo` varchar(150) NOT NULL,
   `usuario` varchar(50) NOT NULL,
   `contraseña` varchar(255) NOT NULL,
-  `fecha_registro` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_docente`),
-  UNIQUE KEY `correo` (`correo`),
-  UNIQUE KEY `usuario` (`usuario`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `fecha_registro` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.docentes: 0 rows
-/*!40000 ALTER TABLE `docentes` DISABLE KEYS */;
+--
+-- Volcado de datos para la tabla `docentes`
+--
+
 INSERT INTO `docentes` (`id_docente`, `nombre`, `apellido_paterno`, `apellido_materno`, `correo`, `usuario`, `contraseña`, `fecha_registro`) VALUES
-	(1, 'Admin', 'Principal', 'Sistema', 'admin@cetis61.edu.mx', 'admin', '12345', '2026-05-13 09:36:30');
-/*!40000 ALTER TABLE `docentes` ENABLE KEYS */;
+(1, 'Admin', 'Principal', 'Sistema', 'admin@cetis61.edu.mx', 'admin', '12345', '2026-05-14 03:45:33'),
+(2, '123', '123', '123', '123@gmail.com', '123', '$2b$12$XXoiVilo52WWChCux.RhA.Q2eE1AwjrZPUmrCvLOqYk/6/jt66dru', '2026-05-13 22:14:21'),
+(3, 'dylan', 'stinze', 'reyes', '12@gmail.com', 'elpepe', '$2b$12$YRd0isd/aotFb3KgYHm8z.EA5QJYAoPJjXLH1U4tqSPmAqFjxWe0a', '2026-05-13 23:01:47');
 
--- Volcando estructura para tabla edumind.materias
-CREATE TABLE IF NOT EXISTS `materias` (
-  `id_materia` int NOT NULL AUTO_INCREMENT,
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `grupos`
+--
+
+CREATE TABLE `grupos` (
+  `id_grupo` int(11) NOT NULL,
+  `grado` int(11) NOT NULL,
+  `grupo` varchar(10) NOT NULL,
+  `especialidad` varchar(100) NOT NULL,
+  `turno` enum('Matutino','Vespertino') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `grupos`
+--
+
+INSERT INTO `grupos` (`id_grupo`, `grado`, `grupo`, `especialidad`, `turno`) VALUES
+(1, 2, 'D', 'RH', 'Matutino');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `materias`
+--
+
+CREATE TABLE `materias` (
+  `id_materia` int(11) NOT NULL,
   `nombre_materia` varchar(100) NOT NULL,
-  `semestre` int NOT NULL,
-  `especialidad` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`id_materia`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `semestre` int(11) NOT NULL,
+  `especialidad` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.materias: 0 rows
-/*!40000 ALTER TABLE `materias` DISABLE KEYS */;
-/*!40000 ALTER TABLE `materias` ENABLE KEYS */;
+-- --------------------------------------------------------
 
--- Volcando estructura para tabla edumind.observaciones
-CREATE TABLE IF NOT EXISTS `observaciones` (
-  `id_observacion` int NOT NULL AUTO_INCREMENT,
-  `id_alumno` int NOT NULL,
-  `id_docente` int NOT NULL,
+--
+-- Estructura de tabla para la tabla `observaciones`
+--
+
+CREATE TABLE `observaciones` (
+  `id_observacion` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
+  `id_docente` int(11) NOT NULL,
   `descripcion` text NOT NULL,
   `fecha_registro` date DEFAULT NULL,
-  `prioridad` enum('Baja','Media','Alta') DEFAULT 'Media',
-  PRIMARY KEY (`id_observacion`),
-  KEY `fk_observacion_alumno` (`id_alumno`),
-  KEY `fk_observacion_docente` (`id_docente`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `prioridad` enum('Baja','Media','Alta') DEFAULT 'Media'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.observaciones: 0 rows
-/*!40000 ALTER TABLE `observaciones` DISABLE KEYS */;
-/*!40000 ALTER TABLE `observaciones` ENABLE KEYS */;
+-- --------------------------------------------------------
 
--- Volcando estructura para tabla edumind.reportes
-CREATE TABLE IF NOT EXISTS `reportes` (
-  `id_reporte` int NOT NULL AUTO_INCREMENT,
-  `id_docente` int NOT NULL,
+--
+-- Estructura de tabla para la tabla `reportes`
+--
+
+CREATE TABLE `reportes` (
+  `id_reporte` int(11) NOT NULL,
+  `id_docente` int(11) NOT NULL,
   `tipo_reporte` varchar(100) NOT NULL,
-  `fecha_generado` datetime DEFAULT CURRENT_TIMESTAMP,
-  `descripcion` text,
-  PRIMARY KEY (`id_reporte`),
-  KEY `fk_reporte_docente` (`id_docente`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `fecha_generado` datetime DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.reportes: 0 rows
-/*!40000 ALTER TABLE `reportes` DISABLE KEYS */;
-/*!40000 ALTER TABLE `reportes` ENABLE KEYS */;
+-- --------------------------------------------------------
 
--- Volcando estructura para tabla edumind.riesgo_academico
-CREATE TABLE IF NOT EXISTS `riesgo_academico` (
-  `id_riesgo` int NOT NULL AUTO_INCREMENT,
-  `id_alumno` int NOT NULL,
+--
+-- Estructura de tabla para la tabla `riesgo_academico`
+--
+
+CREATE TABLE `riesgo_academico` (
+  `id_riesgo` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
   `nivel_riesgo` enum('Bajo','Medio','Alto') NOT NULL,
   `motivo` text NOT NULL,
   `fecha_registro` date DEFAULT NULL,
-  `seguimiento` text,
-  PRIMARY KEY (`id_riesgo`),
-  KEY `fk_riesgo_alumno` (`id_alumno`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `seguimiento` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Volcando datos para la tabla edumind.riesgo_academico: 0 rows
-/*!40000 ALTER TABLE `riesgo_academico` DISABLE KEYS */;
-/*!40000 ALTER TABLE `riesgo_academico` ENABLE KEYS */;
+--
+-- Índices para tablas volcadas
+--
 
-/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
-/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
-/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+--
+-- Indices de la tabla `alumnos`
+--
+ALTER TABLE `alumnos`
+  ADD PRIMARY KEY (`id_alumno`),
+  ADD UNIQUE KEY `matricula` (`matricula`);
+
+--
+-- Indices de la tabla `asistencias`
+--
+ALTER TABLE `asistencias`
+  ADD PRIMARY KEY (`id_asistencia`),
+  ADD KEY `fk_asistencia_alumno` (`id_alumno`);
+
+--
+-- Indices de la tabla `calificaciones`
+--
+ALTER TABLE `calificaciones`
+  ADD PRIMARY KEY (`id_calificacion`),
+  ADD KEY `fk_calificacion_alumno` (`id_alumno`),
+  ADD KEY `fk_calificacion_materia` (`id_materia`);
+
+--
+-- Indices de la tabla `docentes`
+--
+ALTER TABLE `docentes`
+  ADD PRIMARY KEY (`id_docente`),
+  ADD UNIQUE KEY `correo` (`correo`),
+  ADD UNIQUE KEY `usuario` (`usuario`);
+
+--
+-- Indices de la tabla `grupos`
+--
+ALTER TABLE `grupos`
+  ADD PRIMARY KEY (`id_grupo`);
+
+--
+-- Indices de la tabla `materias`
+--
+ALTER TABLE `materias`
+  ADD PRIMARY KEY (`id_materia`);
+
+--
+-- Indices de la tabla `observaciones`
+--
+ALTER TABLE `observaciones`
+  ADD PRIMARY KEY (`id_observacion`),
+  ADD KEY `fk_observacion_alumno` (`id_alumno`),
+  ADD KEY `fk_observacion_docente` (`id_docente`);
+
+--
+-- Indices de la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  ADD PRIMARY KEY (`id_reporte`),
+  ADD KEY `fk_reporte_docente` (`id_docente`);
+
+--
+-- Indices de la tabla `riesgo_academico`
+--
+ALTER TABLE `riesgo_academico`
+  ADD PRIMARY KEY (`id_riesgo`),
+  ADD KEY `fk_riesgo_alumno` (`id_alumno`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `alumnos`
+--
+ALTER TABLE `alumnos`
+  MODIFY `id_alumno` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `asistencias`
+--
+ALTER TABLE `asistencias`
+  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `calificaciones`
+--
+ALTER TABLE `calificaciones`
+  MODIFY `id_calificacion` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `docentes`
+--
+ALTER TABLE `docentes`
+  MODIFY `id_docente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de la tabla `grupos`
+--
+ALTER TABLE `grupos`
+  MODIFY `id_grupo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `materias`
+--
+ALTER TABLE `materias`
+  MODIFY `id_materia` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `observaciones`
+--
+ALTER TABLE `observaciones`
+  MODIFY `id_observacion` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  MODIFY `id_reporte` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `riesgo_academico`
+--
+ALTER TABLE `riesgo_academico`
+  MODIFY `id_riesgo` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `asistencias`
+--
+ALTER TABLE `asistencias`
+  ADD CONSTRAINT `fk_asistencia_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `calificaciones`
+--
+ALTER TABLE `calificaciones`
+  ADD CONSTRAINT `fk_calificacion_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_calificacion_materia` FOREIGN KEY (`id_materia`) REFERENCES `materias` (`id_materia`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `observaciones`
+--
+ALTER TABLE `observaciones`
+  ADD CONSTRAINT `fk_observacion_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_observacion_docente` FOREIGN KEY (`id_docente`) REFERENCES `docentes` (`id_docente`);
+
+--
+-- Filtros para la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  ADD CONSTRAINT `fk_reporte_docente` FOREIGN KEY (`id_docente`) REFERENCES `docentes` (`id_docente`);
+
+--
+-- Filtros para la tabla `riesgo_academico`
+--
+ALTER TABLE `riesgo_academico`
+  ADD CONSTRAINT `fk_riesgo_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`);
+COMMIT;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
