@@ -17,7 +17,6 @@ def LoginView(page, auth_controller):
     )
 
     def login_click(e):
-        print("CLICK LOGIN")
         if not email_input.value or not pass_input.value:
 
             page.snack_bar = ft.SnackBar(

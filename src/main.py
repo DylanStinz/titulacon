@@ -1,8 +1,10 @@
 import flet as ft
+from controllers.AlumnoController import AlumnoController
 
 from controllers.UserController import AuthController
 from controllers.GrupoController import GrupoController
 
+from views.alumnoView import AlumnoView
 from views.loginView import LoginView
 from views.grupoView import GrupoView
 from views.registerView import RegisterView
@@ -11,6 +13,7 @@ from views.registerView import RegisterView
 def start(page: ft.Page):
 
     auth_ctrl = AuthController()
+    alumno_ctrl = AlumnoController()
     grupo_ctrl = GrupoController()
 
     def route_change(e):
@@ -33,6 +36,12 @@ def start(page: ft.Page):
 
             page.views.append(
                 GrupoView(page, grupo_ctrl)
+            )
+
+        elif page.route == "/alumnos":
+
+            page.views.append(
+                AlumnoView(page, alumno_ctrl)
             )
 
         else:

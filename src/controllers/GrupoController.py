@@ -29,3 +29,7 @@ class GrupoController:
     def obtener_grupos(self):
 
         return self.model.listar_grupos()
+
+    def obtener_alumnos_grupo(self, grupo):
+
+        return self.model.obtener_alumnos_grupo(grupo)

@@ -6,7 +6,7 @@ def GrupoView(page, grupo_controller):
 
     grado = ft.Dropdown(
         label="Grado",
-        width=300,
+        width=145,
         options=[
             ft.dropdown.Option("1"),
             ft.dropdown.Option("2"),
@@ -19,7 +19,7 @@ def GrupoView(page, grupo_controller):
 
     grupo = ft.TextField(
         label="Grupo",
-        width=300
+        width=145
     )
 
     especialidad = ft.TextField(
@@ -46,6 +46,10 @@ def GrupoView(page, grupo_controller):
 
         for g in grupos:
 
+            alumnos = grupo_controller.obtener_alumnos_grupo(
+                g["grupo"]
+            )
+
             lista_grupos.controls.append(
 
                 ft.Card(
@@ -62,8 +66,34 @@ def GrupoView(page, grupo_controller):
                                 f"{g['grado']}° {g['grupo']}"
                             ),
 
-                            subtitle=ft.Text(
-                                f"{g['especialidad']} | {g['turno']}"
+                            subtitle=ft.Column(
+
+                                [
+
+                                    ft.Text(
+                                        f"{g['especialidad']} | {g['turno']}"
+                                    ),
+
+                                    ft.Dropdown(
+
+                                        label="Alumnos",
+
+                                        width=250,
+
+                                        options=[
+
+                                            ft.dropdown.Option(
+                                                f"{a['nombre']} {a['apellido_paterno']}"
+                                            )
+
+                                            for a in alumnos
+
+                                        ]
+
+                                    )
+
+                                ]
+
                             )
 
                         )
@@ -143,9 +173,22 @@ def GrupoView(page, grupo_controller):
                             weight=ft.FontWeight.BOLD
                         ),
 
-                        grado,
-                        grupo,
+                        ft.Row(
+
+                            [
+
+                                grado,
+
+                                grupo
+
+                            ],
+
+                            alignment=ft.MainAxisAlignment.CENTER
+
+                        ),
+
                         especialidad,
+
                         turno,
 
                         ft.ElevatedButton(
@@ -153,6 +196,13 @@ def GrupoView(page, grupo_controller):
                             icon=ft.Icons.SAVE,
                             width=300,
                             on_click=guardar_grupo
+                        ),
+
+                        ft.ElevatedButton(
+                            "Ir a alumnos",
+                            icon=ft.Icons.PEOPLE,
+                            width=300,
+                            on_click=lambda _: page.go("/alumnos")
                         ),
 
                         ft.Divider(),
