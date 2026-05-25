@@ -17,6 +17,7 @@ def LoginView(page, auth_controller):
     )
 
     def login_click(e):
+
         if not email_input.value or not pass_input.value:
 
             page.snack_bar = ft.SnackBar(
@@ -37,7 +38,10 @@ def LoginView(page, auth_controller):
 
         if user:
 
-            page.session.user = user
+            page.session.set(
+                "user",
+                user
+            )
 
             page.go("/dashboard")
 
@@ -76,6 +80,7 @@ def LoginView(page, auth_controller):
                         ),
 
                         email_input,
+
                         pass_input,
 
                         ft.ElevatedButton(

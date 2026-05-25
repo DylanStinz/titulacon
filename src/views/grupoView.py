@@ -2,7 +2,6 @@ import flet as ft
 
 def GrupoView(page, grupo_controller):
 
-    print("GrupoView cargado")
 
     grado = ft.Dropdown(
         label="Grado",
@@ -38,6 +37,10 @@ def GrupoView(page, grupo_controller):
 
     lista_grupos = ft.Column()
 
+    grupo_editando = {
+        "id": None
+    }
+
     def cargar_grupos():
 
         lista_grupos.controls.clear()
@@ -50,6 +53,20 @@ def GrupoView(page, grupo_controller):
                 g["grupo"]
             )
 
+            def editar_grupo(e, grupo_data=g):
+
+                grupo_editando["id"] = grupo_data["id_grupo"]
+
+                grado.value = str(grupo_data["grado"])
+
+                grupo.value = grupo_data["grupo"]
+
+                especialidad.value = grupo_data["especialidad"]
+
+                turno.value = grupo_data["turno"]
+
+                page.update()
+
             lista_grupos.controls.append(
 
                 ft.Card(
@@ -58,43 +75,55 @@ def GrupoView(page, grupo_controller):
 
                         padding=15,
 
-                        content=ft.ListTile(
+                        content=ft.Column(
 
-                            leading=ft.Icon(ft.Icons.GROUP),
+                            [
 
-                            title=ft.Text(
-                                f"{g['grado']}° {g['grupo']}"
-                            ),
+                                ft.ListTile(
 
-                            subtitle=ft.Column(
-
-                                [
-
-                                    ft.Text(
-                                        f"{g['especialidad']} | {g['turno']}"
+                                    leading=ft.Icon(
+                                        ft.icons.GROUP
                                     ),
 
-                                    ft.Dropdown(
+                                    title=ft.Text(
+                                        f"{g['grado']}° {g['grupo']}"
+                                    ),
 
-                                        label="Alumnos",
-
-                                        width=250,
-
-                                        options=[
-
-                                            ft.dropdown.Option(
-                                                f"{a['nombre']} {a['apellido_paterno']}"
-                                            )
-
-                                            for a in alumnos
-
-                                        ]
-
+                                    subtitle=ft.Text(
+                                        f"{g['especialidad']} | {g['turno']}"
                                     )
 
-                                ]
+                                ),
 
-                            )
+                                ft.Dropdown(
+
+                                    label="Alumnos",
+
+                                    width=250,
+
+                                    options=[
+
+                                        ft.dropdown.Option(
+                                            f"{a['nombre']} {a['apellido_paterno']}"
+                                        )
+
+                                        for a in alumnos
+
+                                    ]
+
+                                ),
+
+                                ft.ElevatedButton(
+
+                                    "Editar",
+
+                                    icon=ft.icons.EDIT,
+
+                                    on_click=editar_grupo
+
+                                )
+
+                            ]
 
                         )
                     )
@@ -121,14 +150,30 @@ def GrupoView(page, grupo_controller):
 
             return
 
-        ok, msg = grupo_controller.guardar_grupo(
+        if grupo_editando["id"]:
 
-            grado.value,
-            grupo.value,
-            especialidad.value,
-            turno.value
+            ok, msg = grupo_controller.actualizar_grupo(
 
-        )
+                grupo_editando["id"],
+                grado.value,
+                grupo.value,
+                especialidad.value,
+                turno.value
+
+            )
+
+            grupo_editando["id"] = None
+
+        else:
+
+            ok, msg = grupo_controller.guardar_grupo(
+
+                grado.value,
+                grupo.value,
+                especialidad.value,
+                turno.value
+
+            )
 
         page.snack_bar = ft.SnackBar(
             ft.Text(msg)
@@ -138,8 +183,10 @@ def GrupoView(page, grupo_controller):
 
         if ok:
 
+            grado.value = None
             grupo.value = ""
             especialidad.value = ""
+            turno.value = None
 
             cargar_grupos()
 
@@ -193,14 +240,14 @@ def GrupoView(page, grupo_controller):
 
                         ft.ElevatedButton(
                             "Guardar Grupo",
-                            icon=ft.Icons.SAVE,
+                            icon=ft.icons.SAVE,
                             width=300,
                             on_click=guardar_grupo
                         ),
 
                         ft.ElevatedButton(
                             "Ir a alumnos",
-                            icon=ft.Icons.PEOPLE,
+                            icon=ft.icons.PEOPLE,
                             width=300,
                             on_click=lambda _: page.go("/alumnos")
                         ),

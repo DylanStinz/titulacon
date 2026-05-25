@@ -6,6 +6,30 @@ def AlumnoView(page, alumno_controller):
 
     alumnos = alumno_controller.obtener_alumnos()
 
+    def importar_excel_result(e):
+
+        if e.files:
+
+            archivo = e.files[0].path
+
+            alumno_controller.importar_excel(
+                archivo
+            )
+
+            page.snack_bar = ft.SnackBar(
+                ft.Text("Excel importado correctamente")
+            )
+
+            page.snack_bar.open = True
+
+            page.update()
+
+    file_picker = ft.FilePicker()
+
+    file_picker.on_result = importar_excel_result
+
+    page.overlay.append(file_picker)
+
     dropdown_alumnos = ft.Dropdown(
         label="Seleccionar alumno",
         width=400,
@@ -36,7 +60,9 @@ def AlumnoView(page, alumno_controller):
 
             info_alumno.controls = [
 
-                ft.Text(f'Nombre: {alumno["nombre"]}'),
+                ft.Text(
+                    f'Nombre: {alumno["nombre"]}'
+                ),
 
                 ft.Text(
                     f'Apellido: {alumno["apellido_paterno"]}'
@@ -66,11 +92,29 @@ def AlumnoView(page, alumno_controller):
 
             page.update()
 
+    def exportar_excel(e):
+
+        archivo = alumno_controller.exportar_excel()
+
+        page.snack_bar = ft.SnackBar(
+            ft.Text("Excel exportado correctamente")
+        )
+
+        page.snack_bar.open = True
+
+        page.launch_url(archivo)
+
+        page.update()
+
     dropdown_alumnos.on_change = mostrar_info
 
     return ft.View(
 
         route="/alumnos",
+
+        appbar=ft.AppBar(
+            title=ft.Text("Consulta de alumnos")
+        ),
 
         controls=[
 
@@ -85,6 +129,38 @@ def AlumnoView(page, alumno_controller):
                     ),
 
                     dropdown_alumnos,
+
+                    ft.ElevatedButton(
+
+                        "Exportar Excel",
+
+                        icon=ft.icons.DOWNLOAD,
+
+                        on_click=exportar_excel
+
+                    ),
+
+                    ft.ElevatedButton(
+
+                        "Importar Excel",
+
+                        icon=ft.icons.UPLOAD,
+
+                        on_click=lambda _: file_picker.pick_files(
+                            allowed_extensions=["xlsx"]
+                        )
+
+                    ),
+
+                    ft.ElevatedButton(
+
+                        "Volver",
+
+                        icon=ft.icons.ARROW_BACK,
+
+                        on_click=lambda _: page.go("/dashboard")
+
+                    ),
 
                     ft.Divider(),
 

@@ -1,4 +1,5 @@
 from models.AlumnoModel import AlumnoModel
+import pandas as pd
 
 class AlumnoController:
 
@@ -40,3 +41,37 @@ class AlumnoController:
         )
 
         return True, "Alumno registrado"
+
+    def exportar_excel(self):
+
+        alumnos = self.model.listar_alumnos()
+
+        df = pd.DataFrame(alumnos)
+
+        archivo = "alumnos.xlsx"
+
+        df.to_excel(
+            archivo,
+            index=False
+        )
+
+        return archivo
+    def importar_excel(self, archivo):
+
+        df = pd.read_excel(archivo)
+
+        for _, row in df.iterrows():
+
+            self.model.crear_alumno(
+
+                row["nombre"],
+                row["apellido_paterno"],
+                row["apellido_materno"],
+                row["matricula"],
+                row["grupo"],
+                row["semestre"],
+                row["especialidad"]
+
+            )
+
+        return True
