@@ -2,7 +2,6 @@ import flet as ft
 
 def GrupoView(page, grupo_controller):
 
-
     grado = ft.Dropdown(
         label="Grado",
         width=145,
@@ -58,11 +57,8 @@ def GrupoView(page, grupo_controller):
                 grupo_editando["id"] = grupo_data["id_grupo"]
 
                 grado.value = str(grupo_data["grado"])
-
                 grupo.value = grupo_data["grupo"]
-
                 especialidad.value = grupo_data["especialidad"]
-
                 turno.value = grupo_data["turno"]
 
                 page.update()
@@ -126,8 +122,11 @@ def GrupoView(page, grupo_controller):
                             ]
 
                         )
+
                     )
+
                 )
+
             )
 
         page.update()
@@ -221,17 +220,8 @@ def GrupoView(page, grupo_controller):
                         ),
 
                         ft.Row(
-
-                            [
-
-                                grado,
-
-                                grupo
-
-                            ],
-
+                            [grado, grupo],
                             alignment=ft.MainAxisAlignment.CENTER
-
                         ),
 
                         especialidad,
@@ -268,6 +258,9 @@ def GrupoView(page, grupo_controller):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
 
                 )
+
             )
+
         ]
+
     )

@@ -68,7 +68,7 @@ class UsuarioModel:
 
         user = cursor.fetchone()
 
-        print(user)
+
 
         conn.close()
 

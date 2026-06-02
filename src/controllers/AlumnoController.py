@@ -42,36 +42,100 @@ class AlumnoController:
 
         return True, "Alumno registrado"
 
-    def exportar_excel(self):
-
-        alumnos = self.model.listar_alumnos()
-
-        df = pd.DataFrame(alumnos)
-
-        archivo = "alumnos.xlsx"
-
-        df.to_excel(
-            archivo,
-            index=False
-        )
-
-        return archivo
     def importar_excel(self, archivo):
 
-        df = pd.read_excel(archivo)
+        df = pd.read_excel(
+            archivo,
+            sheet_name=0,
+            header=9
+        )
+
+        print("COLUMNAS DEL EXCEL:")
+        print(df.columns.tolist())
+
+        print("PRIMERAS FILAS:")
+        print(df.head())
+
+        print("CALIFICACIONES:")
+        print(df[["Calf.", "Calf..1", "Calf..2"]].head())
 
         for _, row in df.iterrows():
 
+            control = row.iloc[1]
+            nombre_excel = row.iloc[2]
+
+            if pd.isna(control):
+                continue
+
+            matricula = str(control)
+
+            nombre_completo = str(nombre_excel)
+
+            partes = nombre_completo.split()
+
+            nombre = partes[0]
+
+            apellido_paterno = (
+                partes[1]
+                if len(partes) > 1 else ""
+            )
+
+            apellido_materno = (
+                partes[2]
+                if len(partes) > 2 else ""
+            )
+
+            semestre = "2"
+            especialidad = "Programación"
+            grupo = "D"
+
+        if not self.model.existe_matricula(matricula):
+
             self.model.crear_alumno(
+                nombre,
+                apellido_paterno,
+                apellido_materno,
+                matricula,
+                grupo,
+                semestre,
+                especialidad
+            )
 
-                row["nombre"],
-                row["apellido_paterno"],
-                row["apellido_materno"],
-                row["matricula"],
-                row["grupo"],
-                row["semestre"],
-                row["especialidad"]
+        id_alumno = self.model.obtener_id_por_matricula(
+            matricula
+        )
 
+        id_materia = 1
+
+        p1 = row["Calf."]
+        p2 = row["Calf..1"]
+        p3 = row["Calf..2"]
+
+        if pd.notna(p1):
+
+            self.model.crear_calificacion(
+                id_alumno,
+                id_materia,
+                1,
+                float(p1)
+            )
+
+        if pd.notna(p2):
+
+            self.model.crear_calificacion(
+                id_alumno,
+                id_materia,
+                2,
+                float(p2)
+            )
+
+        if pd.notna(p3):
+
+            self.model.crear_calificacion(
+                id_alumno,
+                id_materia,
+                3,
+                float(p3)
             )
 
         return True

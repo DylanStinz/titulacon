@@ -32,4 +32,6 @@ class GrupoController:
 
     def obtener_alumnos_grupo(self, grupo):
 
-        return self.model.obtener_alumnos_grupo(grupo)
+        return self.model.obtener_alumnos_grupo(
+            grupo
+        )

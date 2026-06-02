@@ -93,3 +93,22 @@ class GrupoModel:
         conn.close()
 
         return alumnos
+    def obtener_alumnos_grupo(self, grupo):
+
+        conn = self.db.get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT *
+        FROM alumnos
+        WHERE grupo = %s
+        """
+
+        cursor.execute(query, (grupo,))
+
+        alumnos = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return alumnos
