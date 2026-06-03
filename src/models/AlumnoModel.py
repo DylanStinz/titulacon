@@ -3,13 +3,11 @@ from .database import Database
 class AlumnoModel:
 
     def __init__(self):
-
         self.db = Database()
 
     def listar_alumnos(self):
 
         conn = self.db.get_connection()
-
         cursor = conn.cursor(dictionary=True)
 
         query = """
@@ -20,6 +18,7 @@ class AlumnoModel:
 
         alumnos = cursor.fetchall()
 
+        cursor.close()
         conn.close()
 
         return alumnos
@@ -36,7 +35,6 @@ class AlumnoModel:
     ):
 
         conn = self.db.get_connection()
-
         cursor = conn.cursor()
 
         query = """
@@ -54,7 +52,6 @@ class AlumnoModel:
         """
 
         valores = (
-
             nombre,
             apellido_paterno,
             apellido_materno,
@@ -62,16 +59,17 @@ class AlumnoModel:
             grupo,
             semestre,
             especialidad
-
         )
 
         cursor.execute(query, valores)
 
         conn.commit()
 
+        cursor.close()
         conn.close()
 
         return True
+
     def existe_matricula(self, matricula):
 
         conn = self.db.get_connection()
@@ -91,44 +89,7 @@ class AlumnoModel:
         conn.close()
 
         return resultado is not None
-    
-    def crear_calificacion(
-            self,
-            id_alumno,
-            id_materia,
-            parcial,
-            calificacion
-        ):
 
-            conn = self.db.get_connection()
-            cursor = conn.cursor()
-
-            query = """
-            INSERT INTO calificaciones
-            (
-                id_alumno,
-                id_materia,
-                parcial,
-                calificacion,
-                fecha_registro
-            )
-            VALUES (%s,%s,%s,%s,CURDATE())
-            """
-
-            cursor.execute(
-                query,
-                (
-                    id_alumno,
-                    id_materia,
-                    parcial,
-                    calificacion
-                )
-            )
-
-            conn.commit()
-
-            cursor.close()
-            conn.close()
     def obtener_id_por_matricula(self, matricula):
 
         conn = self.db.get_connection()
@@ -147,4 +108,72 @@ class AlumnoModel:
         cursor.close()
         conn.close()
 
-        return alumno["id_alumno"]
+        if alumno:
+            return alumno["id_alumno"]
+
+        return None
+
+    def crear_calificacion(
+        self,
+        id_alumno,
+        id_materia,
+        parcial,
+        calificacion
+    ):
+
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+        INSERT INTO calificaciones
+        (
+            id_alumno,
+            id_materia,
+            parcial,
+            calificacion,
+            fecha_registro
+        )
+        VALUES (%s,%s,%s,%s,CURDATE())
+        """
+
+        cursor.execute(
+            query,
+            (
+                id_alumno,
+                id_materia,
+                parcial,
+                calificacion
+            )
+        )
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+    # NUEVO MÉTODO
+    def obtener_calificaciones_alumno(self, id_alumno):
+
+        conn = self.db.get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT
+            c.parcial,
+            c.calificacion,
+            m.nombre_materia
+        FROM calificaciones c
+        INNER JOIN materias m
+            ON c.id_materia = m.id_materia
+        WHERE c.id_alumno = %s
+        ORDER BY c.parcial
+        """
+
+        cursor.execute(query, (id_alumno,))
+
+        calificaciones = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return calificaciones

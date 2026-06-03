@@ -1,6 +1,7 @@
 from models.AlumnoModel import AlumnoModel
 import pandas as pd
 
+
 class AlumnoController:
 
     def __init__(self):
@@ -10,6 +11,15 @@ class AlumnoController:
     def obtener_alumnos(self):
 
         return self.model.listar_alumnos()
+
+    def obtener_calificaciones_alumno(
+        self,
+        id_alumno
+    ):
+
+        return self.model.obtener_calificaciones_alumno(
+            id_alumno
+        )
 
     def guardar_alumno(
         self,
@@ -89,53 +99,70 @@ class AlumnoController:
             especialidad = "Programación"
             grupo = "D"
 
-        if not self.model.existe_matricula(matricula):
+            if not self.model.existe_matricula(
+                matricula
+            ):
 
-            self.model.crear_alumno(
-                nombre,
-                apellido_paterno,
-                apellido_materno,
-                matricula,
-                grupo,
-                semestre,
-                especialidad
+                self.model.crear_alumno(
+
+                    nombre,
+                    apellido_paterno,
+                    apellido_materno,
+                    matricula,
+                    grupo,
+                    semestre,
+                    especialidad
+
+                )
+
+            id_alumno = (
+                self.model.obtener_id_por_matricula(
+                    matricula
+                )
             )
 
-        id_alumno = self.model.obtener_id_por_matricula(
-            matricula
-        )
+            id_materia = 1
 
-        id_materia = 1
+            p1 = row["Calf."]
+            p2 = row["Calf..1"]
+            p3 = row["Calf..2"]
+            
+            if pd.notna(p1):
 
-        p1 = row["Calf."]
-        p2 = row["Calf..1"]
-        p3 = row["Calf..2"]
+                self.model.crear_calificacion(
 
-        if pd.notna(p1):
+                    id_alumno,
+                    id_materia,
+                    1,
+                    float(p1)
 
-            self.model.crear_calificacion(
-                id_alumno,
-                id_materia,
-                1,
-                float(p1)
-            )
+                )
 
-        if pd.notna(p2):
+            if pd.notna(p2):
 
-            self.model.crear_calificacion(
-                id_alumno,
-                id_materia,
-                2,
-                float(p2)
-            )
+                self.model.crear_calificacion(
 
-        if pd.notna(p3):
+                    id_alumno,
+                    id_materia,
+                    2,
+                    float(p2)
 
-            self.model.crear_calificacion(
-                id_alumno,
-                id_materia,
-                3,
-                float(p3)
-            )
+                )
+
+            if pd.notna(p3):
+
+                self.model.crear_calificacion(
+
+                    id_alumno,
+                    id_materia,
+                    3,
+                    float(p3)
+
+                )
 
         return True
+    def obtener_calificaciones_alumno(self, id_alumno):
+
+        return self.model.obtener_calificaciones_alumno(
+            id_alumno
+        )

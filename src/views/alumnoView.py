@@ -31,15 +31,22 @@ def AlumnoView(page, alumno_controller):
     page.overlay.append(file_picker)
 
     dropdown_alumnos = ft.Dropdown(
+
         label="Seleccionar alumno",
+
         width=400,
+
         options=[
+
             ft.dropdown.Option(
                 str(a["id_alumno"]),
                 f'{a["nombre"]} {a["apellido_paterno"]}'
             )
+
             for a in alumnos
+
         ]
+
     )
 
     def mostrar_info(e):
@@ -54,9 +61,43 @@ def AlumnoView(page, alumno_controller):
             ),
 
             None
+
         )
 
         if alumno:
+
+            calificaciones = (
+                alumno_controller.obtener_calificaciones_alumno(
+                    alumno["id_alumno"]
+                )
+            )
+
+            p1 = 0
+            p2 = 0
+            p3 = 0
+
+            for c in calificaciones:
+
+                if c["parcial"] == 1:
+
+                    p1 = c["calificacion"]
+
+                elif c["parcial"] == 2:
+
+                    p2 = c["calificacion"]
+
+                elif c["parcial"] == 3:
+
+                    p3 = c["calificacion"]
+
+            promedio = round(
+                (
+                    float(p1) +
+                    float(p2) +
+                    float(p3)
+                ) / 3,
+                2
+            )
 
             info_alumno.controls = [
 
@@ -86,6 +127,34 @@ def AlumnoView(page, alumno_controller):
 
                 ft.Text(
                     f'Estatus: {alumno["estatus"]}'
+                ),
+
+                ft.Divider(),
+
+                ft.Text(
+                    "CALIFICACIONES",
+                    size=20,
+                    weight=ft.FontWeight.BOLD
+                ),
+
+                ft.Text(
+                    f"Parcial 1: {p1}"
+                ),
+
+                ft.Text(
+                    f"Parcial 2: {p2}"
+                ),
+
+                ft.Text(
+                    f"Parcial 3: {p3}"
+                ),
+
+                ft.Divider(),
+
+                ft.Text(
+                    f"Promedio: {promedio}",
+                    size=18,
+                    weight=ft.FontWeight.BOLD
                 )
 
             ]
@@ -173,4 +242,5 @@ def AlumnoView(page, alumno_controller):
             )
 
         ]
+
     )

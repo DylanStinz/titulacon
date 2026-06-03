@@ -241,7 +241,12 @@ def GrupoView(page, grupo_controller):
                             width=300,
                             on_click=lambda _: page.go("/alumnos")
                         ),
-
+                        ft.ElevatedButton(
+                            "Estadísticas",
+                            icon=ft.icons.ANALYTICS,
+                            width=300,
+                            on_click=lambda _: page.go("/estadisticas")
+                        ),
                         ft.Divider(),
 
                         ft.Text(
