@@ -74,3 +74,52 @@ class EstadisticasModel:
         conn.close()
 
         return total
+    def total_aprobados(self):
+
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+        SELECT COUNT(*)
+        FROM (
+            SELECT id_alumno,
+                AVG(calificacion) AS promedio
+            FROM calificaciones
+            GROUP BY id_alumno
+            HAVING promedio >= 6
+        ) AS alumnos_aprobados
+        """
+
+        cursor.execute(query)
+
+        total = cursor.fetchone()[0]
+
+        cursor.close()
+        conn.close()
+
+        return total
+
+    def total_reprobados(self):
+
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+        SELECT COUNT(*)
+        FROM (
+            SELECT id_alumno,
+                AVG(calificacion) AS promedio
+            FROM calificaciones
+            GROUP BY id_alumno
+            HAVING promedio < 6
+        ) AS alumnos_reprobados
+        """
+
+        cursor.execute(query)
+
+        total = cursor.fetchone()[0]
+
+        cursor.close()
+        conn.close()
+
+        return total

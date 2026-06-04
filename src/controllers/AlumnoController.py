@@ -1,6 +1,6 @@
 from models.AlumnoModel import AlumnoModel
 import pandas as pd
-
+from openpyxl import Workbook
 
 class AlumnoController:
 
@@ -166,3 +166,49 @@ class AlumnoController:
         return self.model.obtener_calificaciones_alumno(
             id_alumno
         )
+    def generar_plantilla(
+        self,
+        grupo,
+        semestre,
+        especialidad
+    ):
+
+        wb = Workbook()
+
+        ws = wb.active
+
+        ws.title = "Calificaciones"
+
+        encabezados = [
+
+            "Matrícula",
+            "Nombre",
+            "Grupo",
+            "Semestre",
+            "Especialidad",
+            "Parcial 1",
+            "Parcial 2",
+            "Parcial 3"
+
+        ]
+
+        for col, encabezado in enumerate(
+            encabezados,
+            start=1
+        ):
+
+            ws.cell(
+                row=1,
+                column=col,
+                value=encabezado
+            )
+
+        archivo = (
+            f"Plantilla_"
+            f"{grupo}_"
+            f"{semestre}.xlsx"
+        )
+
+        wb.save(archivo)
+
+        return archivo

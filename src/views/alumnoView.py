@@ -23,6 +23,28 @@ def AlumnoView(page, alumno_controller):
             page.snack_bar.open = True
 
             page.update()
+    def generar_plantilla(e):
+
+        archivo = (
+            alumno_controller
+            .generar_plantilla(
+                "D",
+                2,
+                "Programación"
+            )
+        )
+
+        page.snack_bar = ft.SnackBar(
+            ft.Text(
+                "Plantilla generada correctamente"
+            )
+        )
+
+        page.snack_bar.open = True
+
+        page.launch_url(archivo)
+
+        page.update()
 
     file_picker = ft.FilePicker()
 
@@ -208,6 +230,15 @@ def AlumnoView(page, alumno_controller):
                         on_click=exportar_excel
 
                     ),
+                    ft.ElevatedButton(
+
+                        "Generar Plantilla",
+
+                        icon=ft.icons.TABLE_VIEW,
+
+                        on_click=generar_plantilla
+
+                        ),
 
                     ft.ElevatedButton(
 
