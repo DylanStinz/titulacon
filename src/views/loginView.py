@@ -41,7 +41,7 @@ def LoginView(page, auth_controller):
 
         if user:
             page.session.set("user", user)
-            page.go("/dashboard")
+            page.go("/menu")
         else:
             page.snack_bar = ft.SnackBar(
                 ft.Text(msg, color=VINO_OSCURO),

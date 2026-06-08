@@ -5,210 +5,82 @@ from openpyxl import Workbook
 class AlumnoController:
 
     def __init__(self):
-
         self.model = AlumnoModel()
 
     def obtener_alumnos(self):
-
         return self.model.listar_alumnos()
 
-    def obtener_calificaciones_alumno(
-        self,
-        id_alumno
-    ):
+    def obtener_calificaciones_alumno(self, id_alumno):
+        return self.model.obtener_calificaciones_alumno(id_alumno)
 
-        return self.model.obtener_calificaciones_alumno(
-            id_alumno
-        )
-
-    def guardar_alumno(
-        self,
-        nombre,
-        apellido_paterno,
-        apellido_materno,
-        matricula,
-        grupo,
-        semestre,
-        especialidad
-    ):
-
+    def guardar_alumno(self, nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad):
         if not nombre:
             return False, "El nombre es obligatorio"
-
         if not matricula:
             return False, "La matrícula es obligatoria"
-
-        self.model.crear_alumno(
-
-            nombre,
-            apellido_paterno,
-            apellido_materno,
-            matricula,
-            grupo,
-            semestre,
-            especialidad
-
-        )
-
+        self.model.crear_alumno(nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad)
         return True, "Alumno registrado"
 
     def importar_excel(self, archivo):
-
-        df = pd.read_excel(
-            archivo,
-            sheet_name=0,
-            header=9
-        )
-
-        print("COLUMNAS DEL EXCEL:")
-        print(df.columns.tolist())
-
-        print("PRIMERAS FILAS:")
-        print(df.head())
-
-        print("CALIFICACIONES:")
-        print(df[["Calf.", "Calf..1", "Calf..2"]].head())
-
+        df = pd.read_excel(archivo, sheet_name=0, header=9)
         for _, row in df.iterrows():
-
             control = row.iloc[1]
             nombre_excel = row.iloc[2]
-
             if pd.isna(control):
                 continue
-
             matricula = str(control)
-
             nombre_completo = str(nombre_excel)
-
             partes = nombre_completo.split()
-
             nombre = partes[0]
-
-            apellido_paterno = (
-                partes[1]
-                if len(partes) > 1 else ""
-            )
-
-            apellido_materno = (
-                partes[2]
-                if len(partes) > 2 else ""
-            )
-
+            apellido_paterno = partes[1] if len(partes) > 1 else ""
+            apellido_materno = partes[2] if len(partes) > 2 else ""
             semestre = "2"
             especialidad = "Programación"
             grupo = "D"
-
-            if not self.model.existe_matricula(
-                matricula
-            ):
-
-                self.model.crear_alumno(
-
-                    nombre,
-                    apellido_paterno,
-                    apellido_materno,
-                    matricula,
-                    grupo,
-                    semestre,
-                    especialidad
-
-                )
-
-            id_alumno = (
-                self.model.obtener_id_por_matricula(
-                    matricula
-                )
-            )
-
-            id_materia = 1
-
+            if not self.model.existe_matricula(matricula):
+                self.model.crear_alumno(nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad)
+            id_alumno = self.model.obtener_id_por_matricula(matricula)
+            id_materia = 2
             p1 = row["Calf."]
             p2 = row["Calf..1"]
             p3 = row["Calf..2"]
-            
             if pd.notna(p1):
-
-                self.model.crear_calificacion(
-
-                    id_alumno,
-                    id_materia,
-                    1,
-                    float(p1)
-
-                )
-
+                self.model.crear_calificacion(id_alumno, id_materia, 1, float(p1))
             if pd.notna(p2):
-
-                self.model.crear_calificacion(
-
-                    id_alumno,
-                    id_materia,
-                    2,
-                    float(p2)
-
-                )
-
+                self.model.crear_calificacion(id_alumno, id_materia, 2, float(p2))
             if pd.notna(p3):
-
-                self.model.crear_calificacion(
-
-                    id_alumno,
-                    id_materia,
-                    3,
-                    float(p3)
-
-                )
-
+                self.model.crear_calificacion(id_alumno, id_materia, 3, float(p3))
         return True
-    def obtener_calificaciones_alumno(self, id_alumno):
 
-        return self.model.obtener_calificaciones_alumno(
-            id_alumno
-        )
-    def generar_plantilla(
-        self,
-        grupo,
-        semestre,
-        especialidad
-    ):
-
+    def generar_plantilla(self, grupo, semestre, especialidad):
         wb = Workbook()
-
         ws = wb.active
-
         ws.title = "Calificaciones"
-
-        encabezados = [
-
-            "Matrícula",
-            "Nombre",
-            "Grupo",
-            "Semestre",
-            "Especialidad",
-            "Parcial 1",
-            "Parcial 2",
-            "Parcial 3"
-
-        ]
-
-        for col, encabezado in enumerate(
-            encabezados,
-            start=1
-        ):
-
-            ws.cell(
-                row=1,
-                column=col,
-                value=encabezado
-            )
-
-        archivo = (
-            f"Plantilla_"
-            f"{grupo}_"
-            f"{semestre}.xlsx"
-        )
-
+        encabezados = ["Matrícula", "Nombre", "Grupo", "Semestre", "Especialidad", "Parcial 1", "Parcial 2", "Parcial 3"]
+        for col, encabezado in enumerate(encabezados, start=1):
+            ws.cell(row=1, column=col, value=encabezado)
+        archivo = f"Plantilla_{grupo}_{semestre}.xlsx"
         wb.save(archivo)
+        return archivo
 
+    def exportar_excel(self):
+        alumnos = self.model.listar_alumnos()
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Alumnos"
+        encabezados = ["ID", "Nombre", "Apellido Paterno", "Apellido Materno", "Matrícula", "Grupo", "Semestre", "Especialidad", "Estatus"]
+        for col, encabezado in enumerate(encabezados, start=1):
+            ws.cell(row=1, column=col, value=encabezado)
+        for row_idx, alumno in enumerate(alumnos, start=2):
+            ws.cell(row=row_idx, column=1, value=alumno.get("id_alumno", ""))
+            ws.cell(row=row_idx, column=2, value=alumno.get("nombre", ""))
+            ws.cell(row=row_idx, column=3, value=alumno.get("apellido_paterno", ""))
+            ws.cell(row=row_idx, column=4, value=alumno.get("apellido_materno", ""))
+            ws.cell(row=row_idx, column=5, value=alumno.get("matricula", ""))
+            ws.cell(row=row_idx, column=6, value=alumno.get("grupo", ""))
+            ws.cell(row=row_idx, column=7, value=alumno.get("semestre", ""))
+            ws.cell(row=row_idx, column=8, value=alumno.get("especialidad", ""))
+            ws.cell(row=row_idx, column=9, value=alumno.get("estatus", ""))
+        archivo = "Alumnos_exportados.xlsx"
+        wb.save(archivo)
         return archivo

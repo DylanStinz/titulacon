@@ -1,5 +1,8 @@
 import flet as ft
 
+# ============================================================
+# VISTA DE ALUMNOS
+# ============================================================
 def AlumnoView(page, alumno_controller):
     VINO_PRINCIPAL = "#722F37"
     VINO_OSCURO = "#4A1C22"
@@ -7,23 +10,12 @@ def AlumnoView(page, alumno_controller):
     BLANCO = "#FFFFFF"
     GRIS_SUAVE = "#FAFAFA"
 
-    estilo_dropdown = {
-        "border_color": VINO_PRINCIPAL,
-        "focused_border_color": VINO_OSCURO,
-        "bgcolor": BLANCO,
-        "border_radius": 12,
-        "filled": True,
-        "fill_color": GRIS_SUAVE,
-    }
-
-    estilo_texto_info = {
-        "size": 15,
-        "color": VINO_OSCURO,
-    }
-
     info_alumno = ft.Column(spacing=12)
-
-    alumnos = alumno_controller.obtener_alumnos()
+    
+    def cargar_alumnos():
+        return alumno_controller.obtener_alumnos()
+    
+    alumnos = cargar_alumnos()
 
     def importar_excel_result(e):
         if e.files:
@@ -32,19 +24,31 @@ def AlumnoView(page, alumno_controller):
             page.snack_bar = ft.SnackBar(
                 ft.Text("✅ Excel importado correctamente", color=VINO_OSCURO),
                 bgcolor=BLANCO,
-                behavior=ft.SnackBarBehavior.FLOATING,
-                shape=ft.RoundedRectangleBorder(radius=8),
             )
             page.snack_bar.open = True
+            # Recargar dropdown
+            nuevos_alumnos = cargar_alumnos()
+            dropdown_alumnos.options = [
+                ft.dropdown.Option(str(a["id_alumno"]), f'{a["nombre"]} {a["apellido_paterno"]}')
+                for a in nuevos_alumnos
+            ]
             page.update()
 
     def generar_plantilla(e):
         archivo = alumno_controller.generar_plantilla("D", 2, "Programación")
         page.snack_bar = ft.SnackBar(
-            ft.Text("📄 Plantilla generada correctamente", color=VINO_OSCURO),
+            ft.Text("📄 Plantilla generada", color=VINO_OSCURO),
             bgcolor=BLANCO,
-            behavior=ft.SnackBarBehavior.FLOATING,
-            shape=ft.RoundedRectangleBorder(radius=8),
+        )
+        page.snack_bar.open = True
+        page.launch_url(archivo)
+        page.update()
+
+    def exportar_excel(e):
+        archivo = alumno_controller.exportar_excel()
+        page.snack_bar = ft.SnackBar(
+            ft.Text("📎 Excel exportado", color=VINO_OSCURO),
+            bgcolor=BLANCO,
         )
         page.snack_bar.open = True
         page.launch_url(archivo)
@@ -58,23 +62,22 @@ def AlumnoView(page, alumno_controller):
         label="Seleccionar alumno",
         width=400,
         options=[
-            ft.dropdown.Option(
-                str(a["id_alumno"]),
-                f'{a["nombre"]} {a["apellido_paterno"]}'
-            )
+            ft.dropdown.Option(str(a["id_alumno"]), f'{a["nombre"]} {a["apellido_paterno"]}')
             for a in alumnos
         ],
-        **estilo_dropdown,
-        icon=ft.icons.PERSON_SEARCH,
+        border_color=VINO_PRINCIPAL,
+        focused_border_color=VINO_OSCURO,
+        bgcolor=BLANCO,
+        border_radius=12,
+        filled=True,
+        fill_color=GRIS_SUAVE,
     )
 
     def mostrar_info(e):
         alumno_id = dropdown_alumnos.value
-        alumno = next(
-            (a for a in alumnos if str(a["id_alumno"]) == alumno_id),
-            None
-        )
-
+        if not alumno_id:
+            return
+        alumno = next((a for a in alumnos if str(a["id_alumno"]) == alumno_id), None)
         if alumno:
             calificaciones = alumno_controller.obtener_calificaciones_alumno(alumno["id_alumno"])
             p1 = p2 = p3 = 0
@@ -85,58 +88,28 @@ def AlumnoView(page, alumno_controller):
                     p2 = c["calificacion"]
                 elif c["parcial"] == 3:
                     p3 = c["calificacion"]
-
-            promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2)
-
+            promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2) if calificaciones else 0
             info_alumno.controls = [
                 ft.Container(
                     padding=20,
                     bgcolor=BLANCO,
                     border_radius=16,
                     border=ft.border.all(1, VINO_CLARO),
-                    shadow=ft.BoxShadow(
-                        spread_radius=1,
-                        blur_radius=8,
-                        color="#D3D3D3",
-                        offset=ft.Offset(0, 2),
-                    ),
                     content=ft.Column(
                         [
-                            # Datos personales
-                            ft.Row(
-                                [ft.Icon(ft.icons.PERSON, color=VINO_PRINCIPAL),
-                                 ft.Text("Datos del alumno", size=18, weight=ft.FontWeight.BOLD, color=VINO_OSCURO)],
-                                spacing=10,
-                            ),
-                            ft.Divider(color=VINO_CLARO, thickness=1),
-                            ft.Text(f"📛 Nombre: {alumno['nombre']}", **estilo_texto_info),
-                            ft.Text(f"📛 Apellido: {alumno['apellido_paterno']}", **estilo_texto_info),
-                            ft.Text(f"🎓 Matrícula: {alumno['matricula']}", **estilo_texto_info),
-                            ft.Text(f"👥 Grupo: {alumno['grupo']}", **estilo_texto_info),
-                            ft.Text(f"📚 Semestre: {alumno['semestre']}", **estilo_texto_info),
-                            ft.Text(f"💼 Especialidad: {alumno['especialidad']}", **estilo_texto_info),
-                            ft.Text(f"⚙️ Estatus: {alumno['estatus']}", **estilo_texto_info),
-                            ft.Divider(color=VINO_CLARO, thickness=1),
-                            # Calificaciones
-                            ft.Row(
-                                [ft.Icon(ft.icons.GRADE, color=VINO_PRINCIPAL),
-                                 ft.Text("Calificaciones", size=18, weight=ft.FontWeight.BOLD, color=VINO_OSCURO)],
-                                spacing=10,
-                            ),
-                            ft.Divider(color=VINO_CLARO, thickness=1),
-                            ft.Text(f"📖 Parcial 1: {p1}", **estilo_texto_info),
-                            ft.Text(f"📖 Parcial 2: {p2}", **estilo_texto_info),
-                            ft.Text(f"📖 Parcial 3: {p3}", **estilo_texto_info),
-                            ft.Divider(color=VINO_CLARO, thickness=1),
-                            ft.Row(
-                                [ft.Icon(ft.icons.ANALYTICS, color=VINO_PRINCIPAL),
-                                 ft.Text(f"Promedio: {promedio}", size=18, weight=ft.FontWeight.BOLD, color=VINO_OSCURO)],
-                                spacing=10,
-                                alignment=ft.MainAxisAlignment.CENTER,
-                            ),
+                            ft.Text(f"📛 Nombre: {alumno.get('nombre', '')}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"📛 Apellido: {alumno.get('apellido_paterno', '')}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"🎓 Matrícula: {alumno.get('matricula', '')}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"👥 Grupo: {alumno.get('grupo', '')}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"📚 Semestre: {alumno.get('semestre', '')}", size=15, color=VINO_OSCURO),
+                            ft.Divider(),
+                            ft.Text(f"📖 Parcial 1: {p1}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"📖 Parcial 2: {p2}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"📖 Parcial 3: {p3}", size=15, color=VINO_OSCURO),
+                            ft.Divider(),
+                            ft.Text(f"🎯 Promedio: {promedio}", size=18, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
                         ],
-                        spacing=12,
-                        horizontal_alignment=ft.CrossAxisAlignment.START,
+                        spacing=10,
                     ),
                 )
             ]
@@ -144,130 +117,208 @@ def AlumnoView(page, alumno_controller):
 
     dropdown_alumnos.on_change = mostrar_info
 
-    def exportar_excel(e):
-        archivo = alumno_controller.exportar_excel()
-        page.snack_bar = ft.SnackBar(
-            ft.Text("📎 Excel exportado correctamente", color=VINO_OSCURO),
-            bgcolor=BLANCO,
-            behavior=ft.SnackBarBehavior.FLOATING,
-            shape=ft.RoundedRectangleBorder(radius=8),
-        )
-        page.snack_bar.open = True
-        page.launch_url(archivo)
-        page.update()
+    # Retornar un Column con todo el contenido
+    return ft.Column(
+        [
+            ft.Text("📚 Gestión de Alumnos", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
+            ft.Divider(),
+            ft.Row(
+                [
+                    dropdown_alumnos,
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            ft.Row(
+                [
+                    ft.ElevatedButton("📎 Exportar Excel", on_click=exportar_excel, icon=ft.icons.DOWNLOAD),
+                    ft.ElevatedButton("📄 Generar Plantilla", on_click=generar_plantilla, icon=ft.icons.TABLE_VIEW),
+                    ft.ElevatedButton("📤 Importar Excel", on_click=lambda _: file_picker.pick_files(allowed_extensions=["xlsx"]), icon=ft.icons.UPLOAD),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=20,
+            ),
+            ft.Divider(),
+            ft.Text("📋 Información del Alumno", size=20, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+            info_alumno,
+        ],
+        spacing=20,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    )
 
-    return ft.View(
-        route="/alumnos",
-        scroll=ft.ScrollMode.AUTO,
-        bgcolor=GRIS_SUAVE,
-        appbar=ft.AppBar(
-            title=ft.Text("Consulta de Alumnos", color=BLANCO, size=22, weight=ft.FontWeight.BOLD),
-            bgcolor=VINO_PRINCIPAL,
-            center_title=True,
-            elevation=4,
-        ),
-        controls=[
-            ft.Container(
-                padding=ft.padding.symmetric(horizontal=40, vertical=30),
+
+# ============================================================
+# VISTA DE GRUPOS
+# ============================================================
+def GrupoView(page, grupo_controller):
+    VINO_PRINCIPAL = "#722F37"
+    VINO_OSCURO = "#4A1C22"
+    VINO_CLARO = "#9B4B55"
+    BLANCO = "#FFFFFF"
+    GRIS_SUAVE = "#FAFAFA"
+
+    grado = ft.Dropdown(
+        label="Grado",
+        width=150,
+        options=[ft.dropdown.Option(str(i)) for i in range(1, 7)],
+        border_color=VINO_PRINCIPAL,
+        focused_border_color=VINO_OSCURO,
+        bgcolor=BLANCO,
+        border_radius=10,
+    )
+    grupo = ft.TextField(label="Grupo", width=150, border_color=VINO_PRINCIPAL, focused_border_color=VINO_OSCURO)
+    especialidad = ft.TextField(label="Especialidad", width=300, border_color=VINO_PRINCIPAL, focused_border_color=VINO_OSCURO)
+    turno = ft.Dropdown(
+        label="Turno",
+        width=300,
+        options=[ft.dropdown.Option("Matutino"), ft.dropdown.Option("Vespertino")],
+        border_color=VINO_PRINCIPAL,
+        focused_border_color=VINO_OSCURO,
+        bgcolor=BLANCO,
+        border_radius=10,
+    )
+    
+    lista_grupos = ft.Column(spacing=15)
+    grupo_editando = {"id": None}
+    
+    def cargar_grupos():
+        lista_grupos.controls.clear()
+        grupos = grupo_controller.obtener_grupos()
+        for g in grupos:
+            tarjeta = ft.Container(
+                width=500,
+                padding=15,
+                bgcolor=BLANCO,
+                border_radius=12,
+                border=ft.border.all(1, VINO_CLARO),
                 content=ft.Column(
                     [
-                        ft.Row(
-                            [
-                                ft.Icon(ft.icons.SCHOOL, color=VINO_PRINCIPAL, size=40),
-                                ft.Text(
-                                    "Consulta de alumnos",
-                                    size=32,
-                                    weight=ft.FontWeight.BOLD,
-                                    color=VINO_OSCURO,
-                                ),
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            spacing=12,
-                        ),
-                        # Dropdown de selección
-                        ft.Container(
-                            padding=20,
-                            bgcolor=BLANCO,
-                            border_radius=20,
-                            shadow=ft.BoxShadow(
-                                blur_radius=8,
-                                color="#D3D3D3",
-                                offset=ft.Offset(0, 2),
-                            ),
-                            content=ft.Column(
-                                [
-                                    dropdown_alumnos,
-                                    ft.Row(
-                                        [
-                                            ft.ElevatedButton(
-                                                content=ft.Row([ft.Icon(ft.icons.DOWNLOAD), ft.Text("Exportar Excel")], spacing=8),
-                                                on_click=exportar_excel,
-                                                style=ft.ButtonStyle(
-                                                    color=VINO_PRINCIPAL,
-                                                    bgcolor=BLANCO,
-                                                    side=ft.BorderSide(1.5, VINO_PRINCIPAL),
-                                                    shape=ft.RoundedRectangleBorder(radius=30),
-                                                ),
-                                            ),
-                                            ft.ElevatedButton(
-                                                content=ft.Row([ft.Icon(ft.icons.TABLE_VIEW), ft.Text("Generar Plantilla")], spacing=8),
-                                                on_click=generar_plantilla,
-                                                style=ft.ButtonStyle(
-                                                    color=VINO_PRINCIPAL,
-                                                    bgcolor=BLANCO,
-                                                    side=ft.BorderSide(1.5, VINO_PRINCIPAL),
-                                                    shape=ft.RoundedRectangleBorder(radius=30),
-                                                ),
-                                            ),
-                                            ft.ElevatedButton(
-                                                content=ft.Row([ft.Icon(ft.icons.UPLOAD), ft.Text("Importar Excel")], spacing=8),
-                                                on_click=lambda _: file_picker.pick_files(allowed_extensions=["xlsx"]),
-                                                style=ft.ButtonStyle(
-                                                    color=BLANCO,
-                                                    bgcolor=VINO_PRINCIPAL,
-                                                    shape=ft.RoundedRectangleBorder(radius=30),
-                                                ),
-                                            ),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.CENTER,
-                                        spacing=15,
-                                        wrap=True,
-                                    ),
-                                    ft.ElevatedButton(
-                                        content=ft.Row([ft.Icon(ft.icons.ARROW_BACK), ft.Text("Volver")], spacing=8),
-                                        on_click=lambda _: page.go("/dashboard"),
-                                        style=ft.ButtonStyle(
-                                            color=VINO_PRINCIPAL,
-                                            bgcolor=BLANCO,
-                                            side=ft.BorderSide(1.5, VINO_PRINCIPAL),
-                                            shape=ft.RoundedRectangleBorder(radius=30),
-                                        ),
-                                        width=200,
-                                    ),
-                                ],
-                                spacing=20,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            ),
-                        ),
-                        ft.Divider(color=VINO_CLARO, height=2, thickness=1),
-                        ft.Row(
-                            [
-                                ft.Icon(ft.icons.INFO, color=VINO_PRINCIPAL, size=28),
-                                ft.Text(
-                                    "Información del alumno",
-                                    size=22,
-                                    weight=ft.FontWeight.BOLD,
-                                    color=VINO_OSCURO,
-                                ),
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            spacing=10,
-                        ),
-                        info_alumno,
+                        ft.Text(f"📌 {g['grado']}° {g['grupo']} - {g['especialidad']}", weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+                        ft.Text(f"🕒 Turno: {g['turno']}", size=13, color=VINO_CLARO),
+                        ft.ElevatedButton("✏️ Editar", on_click=lambda e, g=g: editar_grupo(g), icon=ft.icons.EDIT),
                     ],
-                    spacing=25,
+                    spacing=8,
+                ),
+            )
+            lista_grupos.controls.append(tarjeta)
+        page.update()
+    
+    def editar_grupo(grupo_data):
+        grupo_editando["id"] = grupo_data["id_grupo"]
+        grado.value = str(grupo_data["grado"])
+        grupo.value = grupo_data["grupo"]
+        especialidad.value = grupo_data["especialidad"]
+        turno.value = grupo_data["turno"]
+        page.update()
+    
+    def guardar_grupo(e):
+        if not (grado.value and grupo.value and especialidad.value and turno.value):
+            page.snack_bar = ft.SnackBar(ft.Text("⚠️ Completa todos los campos"), bgcolor=BLANCO)
+            page.snack_bar.open = True
+            page.update()
+            return
+        if grupo_editando["id"]:
+            ok, msg = grupo_controller.actualizar_grupo(grupo_editando["id"], grado.value, grupo.value, especialidad.value, turno.value)
+            grupo_editando["id"] = None
+        else:
+            ok, msg = grupo_controller.guardar_grupo(grado.value, grupo.value, especialidad.value, turno.value)
+        page.snack_bar = ft.SnackBar(ft.Text(msg), bgcolor=BLANCO)
+        page.snack_bar.open = True
+        if ok:
+            grado.value = None
+            grupo.value = ""
+            especialidad.value = ""
+            turno.value = None
+            cargar_grupos()
+        page.update()
+    
+    cargar_grupos()
+    
+    return ft.Column(
+        [
+            ft.Text("👥 Gestión de Grupos", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
+            ft.Divider(),
+            ft.Row([grado, grupo], alignment=ft.MainAxisAlignment.CENTER, spacing=20),
+            especialidad,
+            turno,
+            ft.ElevatedButton("💾 Guardar Grupo", on_click=guardar_grupo, icon=ft.icons.SAVE),
+            ft.Divider(),
+            ft.Text("📋 Grupos Registrados", size=20, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+            lista_grupos,
+        ],
+        spacing=20,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+
+
+# ============================================================
+# VISTA DE CALIFICACIONES
+# ============================================================
+def CalificacionView(page, alumno_controller, calificacion_controller):
+    VINO_PRINCIPAL = "#722F37"
+    VINO_OSCURO = "#4A1C22"
+    VINO_CLARO = "#9B4B55"
+    BLANCO = "#FFFFFF"
+    GRIS_SUAVE = "#FAFAFA"
+    
+    alumnos = alumno_controller.obtener_alumnos()
+    info = ft.Column()
+    
+    dropdown = ft.Dropdown(
+        label="Seleccionar Alumno",
+        width=400,
+        options=[
+            ft.dropdown.Option(str(a["id_alumno"]), f'{a["nombre"]} {a["apellido_paterno"]}')
+            for a in alumnos
+        ],
+        border_color=VINO_PRINCIPAL,
+        focused_border_color=VINO_OSCURO,
+        bgcolor=BLANCO,
+        border_radius=10,
+    )
+    
+    def mostrar(e):
+        if not dropdown.value:
+            return
+        calificaciones = calificacion_controller.obtener_calificaciones(dropdown.value)
+        p1 = p2 = p3 = 0
+        for c in calificaciones:
+            if c["parcial"] == 1:
+                p1 = c["calificacion"]
+            elif c["parcial"] == 2:
+                p2 = c["calificacion"]
+            elif c["parcial"] == 3:
+                p3 = c["calificacion"]
+        promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2) if calificaciones else 0
+        info.controls = [
+            ft.Container(
+                padding=20,
+                bgcolor=BLANCO,
+                border_radius=16,
+                border=ft.border.all(1, VINO_CLARO),
+                content=ft.Column(
+                    [
+                        ft.Text(f"📖 Parcial 1: {p1}", size=18, color=VINO_OSCURO),
+                        ft.Text(f"📖 Parcial 2: {p2}", size=18, color=VINO_OSCURO),
+                        ft.Text(f"📖 Parcial 3: {p3}", size=18, color=VINO_OSCURO),
+                        ft.Divider(),
+                        ft.Text(f"🎯 Promedio Final: {promedio}", size=22, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
+                    ],
+                    spacing=15,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             )
+        ]
+        page.update()
+    
+    dropdown.on_change = mostrar
+    
+    return ft.Column(
+        [
+            ft.Text("📖 Consulta de Calificaciones", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
+            ft.Divider(),
+            dropdown,
+            info,
         ],
+        spacing=20,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )
