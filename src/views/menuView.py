@@ -1,7 +1,10 @@
 import flet as ft
-from views.alumnoView import AlumnoView, GrupoView, CalificacionView
+from views.alumnoView import AlumnoView, GrupoView
+from views.calificacionView import CalificacionView
+from views.reporteView import ReporteView
 
-def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller, calificacion_controller):
+# 👈 AGREGAR reporte_controller como parámetro
+def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller, calificacion_controller, reporte_controller):
     VINO_PRINCIPAL = "#722F37"
     BLANCO = "#FFFFFF"
     GRIS_SUAVE = "#FAFAFA"
@@ -13,14 +16,17 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
     vista_alumnos = AlumnoView(page, alumno_controller)
     vista_grupos = GrupoView(page, grupo_controller)
     vista_calificaciones = CalificacionView(page, alumno_controller, calificacion_controller)
+    # 👈 PASAR reporte_controller
+    vista_reportes = ReporteView(page, alumno_controller, reporte_controller)
 
     # Tabs para navegar
     tabs = ft.Tabs(
         selected_index=0,
         tabs=[
-            ft.Tab(text="📚 Alumnos", content=ft.Container(content=vista_alumnos, padding=30, alignment=ft.alignment.top_center)),
-            ft.Tab(text="👥 Grupos", content=ft.Container(content=vista_grupos, padding=30, alignment=ft.alignment.top_center)),
-            ft.Tab(text="📖 Calificaciones", content=ft.Container(content=vista_calificaciones, padding=30, alignment=ft.alignment.top_center)),
+            ft.Tab(text="📚 Alumnos", content=ft.Container(content=vista_alumnos, padding=20, alignment=ft.alignment.top_center)),
+            ft.Tab(text="👥 Grupos", content=ft.Container(content=vista_grupos, padding=20, alignment=ft.alignment.top_center)),
+            ft.Tab(text="📖 Calificaciones", content=ft.Container(content=vista_calificaciones, padding=20, alignment=ft.alignment.top_center)),
+            ft.Tab(text="📋 Reportes", icon=ft.icons.DESCRIPTION, content=ft.Container(content=vista_reportes, padding=20, alignment=ft.alignment.top_center)),
         ],
         expand=True,
         indicator_color=VINO_PRINCIPAL,

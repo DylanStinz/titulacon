@@ -3,7 +3,9 @@ from controllers.AlumnoController import AlumnoController
 from controllers.EstadisticasController import EstadisticasController
 from controllers.UserController import AuthController
 from controllers.GrupoController import GrupoController
-from controllers.CalificacionController import CalificacionController  # IMPORTANTE: Agregar esta
+from controllers.CalificacionController import CalificacionController
+from controllers.ReporteController import ReporteController  # 👈 IMPORTAR
+
 from views.loginView import LoginView
 from views.registerView import RegisterView
 from views.menuView import MenuView
@@ -16,7 +18,8 @@ def start(page: ft.Page):
     alumno_ctrl = AlumnoController()
     grupo_ctrl = GrupoController()
     estadisticas_ctrl = EstadisticasController()
-    calificacion_ctrl = CalificacionController()  # Agregar esta línea
+    calificacion_ctrl = CalificacionController()
+    reporte_ctrl = ReporteController()  # 👈 CREAR
 
     def route_change(e):
         page.views.clear()
@@ -25,15 +28,15 @@ def start(page: ft.Page):
             page.views.append(LoginView(page, auth_ctrl))
         elif page.route == "/register":
             page.views.append(RegisterView(page, auth_ctrl))
-        elif page.route == "/menu" or page.route == "/dashboard":  # Aceptar ambas rutas
-            page.views.append(MenuView(page, alumno_ctrl, grupo_ctrl, estadisticas_ctrl, calificacion_ctrl))
+        elif page.route == "/menu" or page.route == "/dashboard":
+            # 👈 PASAR reporte_ctrl
+            page.views.append(MenuView(page, alumno_ctrl, grupo_ctrl, estadisticas_ctrl, calificacion_ctrl, reporte_ctrl))
         else:
             page.views.append(
                 ft.View(
                     route="/error",
                     controls=[
                         ft.Text("Ruta no encontrada", size=30),
-                        ft.Text(f"La ruta '{page.route}' no existe", size=20),
                         ft.ElevatedButton("Volver al inicio", on_click=lambda _: page.go("/"))
                     ]
                 )
