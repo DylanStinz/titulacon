@@ -1,5 +1,22 @@
 import flet as ft
+import re
+def password_segura(password: str):
+    if len(password) < 8:
+        return False, "Debe tener mínimo 8 caracteres"
 
+    if not re.search(r"[A-Z]", password):
+        return False, "Debe contener al menos una mayúscula"
+
+    if not re.search(r"[a-z]", password):
+        return False, "Debe contener al menos una minúscula"
+
+    if not re.search(r"[0-9]", password):
+        return False, "Debe contener al menos un número"
+
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-]", password):
+        return False, "Debe contener al menos un carácter especial"
+
+    return True, "OK"
 def RegisterView(page, auth_controller):
     VINO_PRINCIPAL = "#722F37"
     VINO_OSCURO = "#4A1C22"
@@ -39,7 +56,7 @@ def RegisterView(page, auth_controller):
         can_reveal_password=True,
         **estilo_textfield
     )
-
+    
     def register_click(e):
         if (
             not nombre.value or
@@ -71,12 +88,13 @@ def RegisterView(page, auth_controller):
             page.update()
             return
 
-        if len(password.value) < 6:
+        ok_pass, msg_pass = password_segura(password.value)
+
+        if not ok_pass:
             page.snack_bar = ft.SnackBar(
-                ft.Text("🔒 La contraseña debe tener mínimo 6 caracteres", color=VINO_OSCURO),
+                ft.Text(f"🔒 {msg_pass}", color=VINO_OSCURO),
                 bgcolor=BLANCO,
                 behavior=ft.SnackBarBehavior.FLOATING,
-                shape=ft.RoundedRectangleBorder(radius=8),
             )
             page.snack_bar.open = True
             page.update()

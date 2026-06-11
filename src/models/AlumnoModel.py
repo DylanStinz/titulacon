@@ -1,4 +1,5 @@
 from .database import Database
+from datetime import date
 
 class AlumnoModel:
 
@@ -117,3 +118,36 @@ class AlumnoModel:
         conn.commit()
         cursor.close()
         conn.close()
+    
+    def crear_asistencia(self, id_alumno, estado):
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+        INSERT INTO asistencias (id_alumno, fecha, estado)
+        VALUES (%s, CURDATE(), %s)
+        """
+
+        cursor.execute(query, (id_alumno, estado))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+    def obtener_asistencias_alumno(self, id_alumno):
+        conn = self.db.get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT fecha, estado
+        FROM asistencias
+        WHERE id_alumno = %s
+        ORDER BY fecha DESC
+        """
+
+        cursor.execute(query, (id_alumno,))
+        asistencias = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return asistencias

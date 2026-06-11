@@ -1,8 +1,6 @@
 import flet as ft
 
-# ============================================================
-# VISTA DE ALUMNOS
-# ============================================================
+
 def AlumnoView(page, alumno_controller):
     VINO_PRINCIPAL = "#722F37"
     VINO_OSCURO = "#4A1C22"
@@ -26,7 +24,7 @@ def AlumnoView(page, alumno_controller):
                 bgcolor=BLANCO,
             )
             page.snack_bar.open = True
-            # Recargar dropdown
+
             nuevos_alumnos = cargar_alumnos()
             dropdown_alumnos.options = [
                 ft.dropdown.Option(str(a["id_alumno"]), f'{a["nombre"]} {a["apellido_paterno"]}')
@@ -77,18 +75,66 @@ def AlumnoView(page, alumno_controller):
         alumno_id = dropdown_alumnos.value
         if not alumno_id:
             return
+
         alumno = next((a for a in alumnos if str(a["id_alumno"]) == alumno_id), None)
+
         if alumno:
+
+            # =========================
+            # CALIFICACIONES
+            # =========================
             calificaciones = alumno_controller.obtener_calificaciones_alumno(alumno["id_alumno"])
+
             p1 = p2 = p3 = 0
+
             for c in calificaciones:
+
                 if c["parcial"] == 1:
-                    p1 = c["calificacion"]
+                    p1 = min(float(c["calificacion"]), 10)
+
                 elif c["parcial"] == 2:
-                    p2 = c["calificacion"]
+                    p2 = min(float(c["calificacion"]), 10)
+
                 elif c["parcial"] == 3:
-                    p3 = c["calificacion"]
-            promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2) if calificaciones else 0
+                    p3 = min(float(c["calificacion"]), 10)
+
+            calificaciones_validas = []
+
+            if p1 > 0:
+                calificaciones_validas.append(p1)
+
+            if p2 > 0:
+                calificaciones_validas.append(p2)
+
+            if p3 > 0:
+                calificaciones_validas.append(p3)
+
+            promedio = (
+                round(sum(calificaciones_validas) / len(calificaciones_validas), 2)
+                if calificaciones_validas
+                else 0
+            )
+
+            p1_mostrar = "Pendiente" if p1 == 0 else p1
+            p2_mostrar = "Pendiente" if p2 == 0 else p2
+            p3_mostrar = "Pendiente" if p3 == 0 else p3
+
+            # =========================
+            # ASISTENCIAS (NUEVO)
+            # =========================
+            asistencias = alumno_controller.obtener_asistencias_alumno(alumno["id_alumno"])
+
+            if not asistencias:
+                asistencias = []
+
+            presentes = len([a for a in asistencias if a["estado"] == "Asistió"])
+            faltas = len([a for a in asistencias if a["estado"] == "Falta"])
+            retardos = len([a for a in asistencias if a["estado"] == "Retardo"])
+            total_asistencias = len(asistencias)
+
+            # =========================
+            # UI
+            # =========================
             info_alumno.controls = [
                 ft.Container(
                     padding=20,
@@ -102,22 +148,54 @@ def AlumnoView(page, alumno_controller):
                             ft.Text(f"🎓 Matrícula: {alumno.get('matricula', '')}", size=15, color=VINO_OSCURO),
                             ft.Text(f"👥 Grupo: {alumno.get('grupo', '')}", size=15, color=VINO_OSCURO),
                             ft.Text(f"📚 Semestre: {alumno.get('semestre', '')}", size=15, color=VINO_OSCURO),
+
                             ft.Divider(),
-                            ft.Text(f"📖 Parcial 1: {p1}", size=15, color=VINO_OSCURO),
-                            ft.Text(f"📖 Parcial 2: {p2}", size=15, color=VINO_OSCURO),
-                            ft.Text(f"📖 Parcial 3: {p3}", size=15, color=VINO_OSCURO),
+
+                            ft.Text(f"📖 Parcial 1: {p1_mostrar}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"📖 Parcial 2: {p2_mostrar}", size=15, color=VINO_OSCURO),
+                            ft.Text(f"📖 Parcial 3: {p3_mostrar}", size=15, color=VINO_OSCURO),
+
                             ft.Divider(),
-                            ft.Text(f"🎯 Promedio: {promedio}", size=18, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
+
+                            ft.Text(
+                                f"🎯 Promedio: {promedio}",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=VINO_PRINCIPAL
+                            ),
+
+                            # =========================
+                            # ASISTENCIAS UI
+                            # =========================
+                            ft.Divider(),
+
+                            ft.Text("📊 Asistencias", size=16, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+
+                            ft.Text(f"✅ Asistió: {presentes}", size=14, color=VINO_OSCURO),
+                            ft.Text(f"⚠️ Retardos: {retardos}", size=14, color=VINO_OSCURO),
+                            ft.Text(f"❌ Faltas: {faltas}", size=14, color=VINO_OSCURO),
+                            ft.Text(f"📅 Total registros: {total_asistencias}", size=14, color=VINO_PRINCIPAL),
+
+                            ft.Divider(),
+
+                            ft.Text("📅 Historial", weight=ft.FontWeight.BOLD),
+
+                            *[
+                                ft.Text(f"{a['fecha']} - {a['estado']}")
+                                for a in asistencias
+                            ]
+
                         ],
                         spacing=10,
                     ),
                 )
             ]
+
             page.update()
 
     dropdown_alumnos.on_change = mostrar_info
 
-    # Retornar un Column con todo el contenido
+
     return ft.Column(
         [
             ft.Text("📚 Gestión de Alumnos", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
@@ -146,9 +224,7 @@ def AlumnoView(page, alumno_controller):
     )
 
 
-# ============================================================
-# VISTA DE GRUPOS
-# ============================================================
+
 def GrupoView(page, grupo_controller):
     VINO_PRINCIPAL = "#722F37"
     VINO_OSCURO = "#4A1C22"
@@ -244,80 +320,6 @@ def GrupoView(page, grupo_controller):
             ft.Divider(),
             ft.Text("📋 Grupos Registrados", size=20, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
             lista_grupos,
-        ],
-        spacing=20,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-    )
-
-
-# ============================================================
-# VISTA DE CALIFICACIONES
-# ============================================================
-def CalificacionView(page, alumno_controller, calificacion_controller):
-    VINO_PRINCIPAL = "#722F37"
-    VINO_OSCURO = "#4A1C22"
-    VINO_CLARO = "#9B4B55"
-    BLANCO = "#FFFFFF"
-    GRIS_SUAVE = "#FAFAFA"
-    
-    alumnos = alumno_controller.obtener_alumnos()
-    info = ft.Column()
-    
-    dropdown = ft.Dropdown(
-        label="Seleccionar Alumno",
-        width=400,
-        options=[
-            ft.dropdown.Option(str(a["id_alumno"]), f'{a["nombre"]} {a["apellido_paterno"]}')
-            for a in alumnos
-        ],
-        border_color=VINO_PRINCIPAL,
-        focused_border_color=VINO_OSCURO,
-        bgcolor=BLANCO,
-        border_radius=10,
-    )
-    
-    def mostrar(e):
-        if not dropdown.value:
-            return
-        calificaciones = calificacion_controller.obtener_calificaciones(dropdown.value)
-        p1 = p2 = p3 = 0
-        for c in calificaciones:
-            if c["parcial"] == 1:
-                p1 = c["calificacion"]
-            elif c["parcial"] == 2:
-                p2 = c["calificacion"]
-            elif c["parcial"] == 3:
-                p3 = c["calificacion"]
-        promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2) if calificaciones else 0
-        info.controls = [
-            ft.Container(
-                padding=20,
-                bgcolor=BLANCO,
-                border_radius=16,
-                border=ft.border.all(1, VINO_CLARO),
-                content=ft.Column(
-                    [
-                        ft.Text(f"📖 Parcial 1: {p1}", size=18, color=VINO_OSCURO),
-                        ft.Text(f"📖 Parcial 2: {p2}", size=18, color=VINO_OSCURO),
-                        ft.Text(f"📖 Parcial 3: {p3}", size=18, color=VINO_OSCURO),
-                        ft.Divider(),
-                        ft.Text(f"🎯 Promedio Final: {promedio}", size=22, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
-                    ],
-                    spacing=15,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
-            )
-        ]
-        page.update()
-    
-    dropdown.on_change = mostrar
-    
-    return ft.Column(
-        [
-            ft.Text("📖 Consulta de Calificaciones", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
-            ft.Divider(),
-            dropdown,
-            info,
         ],
         spacing=20,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,

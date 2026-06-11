@@ -1,8 +1,5 @@
 import flet as ft
 
-# ============================================================
-# VISTA DE CALIFICACIONES (CON ESTADÍSTICAS GENERALES)
-# ============================================================
 def CalificacionView(page, alumno_controller, calificacion_controller):
     VINO_PRINCIPAL = "#722F37"
     VINO_OSCURO = "#4A1C22"
@@ -105,37 +102,147 @@ def CalificacionView(page, alumno_controller, calificacion_controller):
     )
     
     def mostrar_calificaciones_alumno(e):
+
         if not dropdown.value:
             return
-        calificaciones = calificacion_controller.obtener_calificaciones(dropdown.value)
+
+        calificaciones = (
+            calificacion_controller.obtener_calificaciones(
+                dropdown.value
+            )
+        )
+
         p1 = p2 = p3 = 0
+
         for c in calificaciones:
+
             if c["parcial"] == 1:
                 p1 = c["calificacion"]
+
             elif c["parcial"] == 2:
                 p2 = c["calificacion"]
+
             elif c["parcial"] == 3:
                 p3 = c["calificacion"]
-        promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2) if calificaciones else 0
+
+        calificaciones_validas = []
+
+        if float(p1) > 0:
+            calificaciones_validas.append(float(p1))
+
+        if float(p2) > 0:
+            calificaciones_validas.append(float(p2))
+
+        if float(p3) > 0:
+            calificaciones_validas.append(float(p3))
+
+        promedio = (
+            round(
+                sum(calificaciones_validas) /
+                len(calificaciones_validas),
+                2
+            )
+            if calificaciones_validas
+            else 0
+        )
+
+        p1_mostrar = (
+            "Pendiente"
+            if float(p1) == 0
+            else p1
+        )
+
+        p2_mostrar = (
+            "Pendiente"
+            if float(p2) == 0
+            else p2
+        )
+
+        p3_mostrar = (
+            "Pendiente"
+            if float(p3) == 0
+            else p3
+        )
+
+        estado = (
+            "⏳ En proceso"
+            if len(calificaciones_validas) < 3
+            else (
+                "✅ Aprobado"
+                if promedio >= 6
+                else "❌ Reprobado"
+            )
+        )
+
         info.controls = [
+
             ft.Container(
+
                 padding=20,
                 bgcolor=BLANCO,
                 border_radius=16,
-                border=ft.border.all(1, VINO_CLARO),
+                border=ft.border.all(
+                    1,
+                    VINO_CLARO
+                ),
+
                 content=ft.Column(
+
                     [
-                        ft.Text(f"📖 Parcial 1: {p1}", size=18, color=VINO_OSCURO),
-                        ft.Text(f"📖 Parcial 2: {p2}", size=18, color=VINO_OSCURO),
-                        ft.Text(f"📖 Parcial 3: {p3}", size=18, color=VINO_OSCURO),
+
+                        ft.Text(
+                            f"📖 Parcial 1: {p1_mostrar}",
+                            size=18,
+                            color=VINO_OSCURO
+                        ),
+
+                        ft.Text(
+                            f"📖 Parcial 2: {p2_mostrar}",
+                            size=18,
+                            color=VINO_OSCURO
+                        ),
+
+                        ft.Text(
+                            f"📖 Parcial 3: {p3_mostrar}",
+                            size=18,
+                            color=VINO_OSCURO
+                        ),
+
                         ft.Divider(),
-                        ft.Text(f"🎯 Promedio Final: {promedio}", size=22, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
+
+                        ft.Text(
+                            f"🎯 Promedio Actual: {promedio}",
+                            size=22,
+                            weight=ft.FontWeight.BOLD,
+                            color=VINO_PRINCIPAL
+                        ),
+
+                        ft.Text(
+                            estado,
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color=(
+                                "#4CAF50"
+                                if "Aprobado" in estado
+                                else (
+                                    "#F44336"
+                                    if "Reprobado" in estado
+                                    else "#FF9800"
+                                    )
+                                )
+                                ),
+
                     ],
+
                     spacing=15,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+
                 ),
+
             )
+
         ]
+
         page.update()
     
     dropdown.on_change = mostrar_calificaciones_alumno

@@ -23,34 +23,111 @@ class AlumnoController:
         return True, "Alumno registrado"
 
     def importar_excel(self, archivo):
-        df = pd.read_excel(archivo, sheet_name=0, header=9)
+
+        df = pd.read_excel(
+            archivo,
+            sheet_name=0,
+            header=9
+        )
+
         for _, row in df.iterrows():
+
             control = row.iloc[1]
             nombre_excel = row.iloc[2]
+
             if pd.isna(control):
                 continue
+
             matricula = str(control)
+
             nombre_completo = str(nombre_excel)
+
             partes = nombre_completo.split()
+
             nombre = partes[0]
             apellido_paterno = partes[1] if len(partes) > 1 else ""
             apellido_materno = partes[2] if len(partes) > 2 else ""
+
             semestre = "2"
             especialidad = "Programación"
             grupo = "D"
+
             if not self.model.existe_matricula(matricula):
-                self.model.crear_alumno(nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad)
+
+                self.model.crear_alumno(
+                    nombre,
+                    apellido_paterno,
+                    apellido_materno,
+                    matricula,
+                    grupo,
+                    semestre,
+                    especialidad
+                )
+
             id_alumno = self.model.obtener_id_por_matricula(matricula)
+            # Asistencias del primer parcial
+            asistencias_p1 = df.columns[4:34]
+
+            for columna in asistencias_p1:
+
+                valor = row[columna]
+
+                if pd.isna(valor):
+                    continue
+
+                if valor is True:
+                    estado = "Asistió"
+
+                elif valor == 1 or valor == 1.0:
+                    estado = "Retardo"
+
+                else:
+                    estado = "Falta"
+
+                self.model.crear_asistencia(
+                    id_alumno,
+                    estado
+                )
+
             id_materia = 2
+
             p1 = row["Calf."]
             p2 = row["Calf..1"]
             p3 = row["Calf..2"]
+
             if pd.notna(p1):
-                self.model.crear_calificacion(id_alumno, id_materia, 1, float(p1))
+
+                calificacion = min(float(p1), 10)
+
+                self.model.crear_calificacion(
+                    id_alumno,
+                    id_materia,
+                    1,
+                    calificacion
+                )
+
             if pd.notna(p2):
-                self.model.crear_calificacion(id_alumno, id_materia, 2, float(p2))
+
+                calificacion = min(float(p2), 10)
+
+                self.model.crear_calificacion(
+                    id_alumno,
+                    id_materia,
+                    2,
+                    calificacion
+                )
+
             if pd.notna(p3):
-                self.model.crear_calificacion(id_alumno, id_materia, 3, float(p3))
+
+                calificacion = min(float(p3), 10)
+
+                self.model.crear_calificacion(
+                    id_alumno,
+                    id_materia,
+                    3,
+                    calificacion
+                )
+
         return True
 
     def generar_plantilla(self, grupo, semestre, especialidad):
@@ -171,3 +248,5 @@ class AlumnoController:
         archivo = f"Reporte_{alumno['matricula']}_{alumno['nombre']}.xlsx"
         wb.save(archivo)
         return archivo
+    def obtener_asistencias_alumno(self, id_alumno):
+        return self.model.obtener_asistencias_alumno(id_alumno)
