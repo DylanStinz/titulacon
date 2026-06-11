@@ -221,6 +221,7 @@ def AlumnoView(page, alumno_controller):
         ],
         spacing=20,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        scroll= ft.ScrollMode.AUTO
     )
 
 

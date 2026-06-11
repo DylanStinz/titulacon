@@ -29,7 +29,7 @@ def start(page: ft.Page):
         elif page.route == "/register":
             page.views.append(RegisterView(page, auth_ctrl))
         elif page.route == "/menu" or page.route == "/dashboard":
-            # 👈 PASAR reporte_ctrl
+
             page.views.append(MenuView(page, alumno_ctrl, grupo_ctrl, estadisticas_ctrl, calificacion_ctrl, reporte_ctrl))
         else:
             page.views.append(
