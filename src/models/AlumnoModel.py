@@ -78,10 +78,7 @@ class AlumnoModel:
         conn.close()
         return calificaciones
 
-    # ========== MÉTODOS NUEVOS PARA REPORTES ==========
-
     def obtener_alumno_por_id(self, id_alumno):
-        """Obtiene un alumno por su ID"""
         conn = self.db.get_connection()
         cursor = conn.cursor(dictionary=True)
         query = "SELECT * FROM alumnos WHERE id_alumno = %s"
@@ -92,7 +89,6 @@ class AlumnoModel:
         return alumno
 
     def actualizar_alumno(self, id_alumno, nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad):
-        """Actualiza los datos de un alumno"""
         conn = self.db.get_connection()
         cursor = conn.cursor()
         query = """
@@ -108,46 +104,38 @@ class AlumnoModel:
         conn.close()
 
     def eliminar_alumno(self, id_alumno):
-        """Elimina un alumno y sus calificaciones relacionadas"""
         conn = self.db.get_connection()
         cursor = conn.cursor()
-        # Primero eliminar calificaciones relacionadas
         cursor.execute("DELETE FROM calificaciones WHERE id_alumno = %s", (id_alumno,))
-        # Luego eliminar alumno
+        cursor.execute("DELETE FROM asistencias WHERE id_alumno = %s", (id_alumno,))
         cursor.execute("DELETE FROM alumnos WHERE id_alumno = %s", (id_alumno,))
         conn.commit()
         cursor.close()
         conn.close()
     
-    def crear_asistencia(self, id_alumno, estado):
+    def crear_asistencia(self, id_alumno, fecha, estado):
         conn = self.db.get_connection()
         cursor = conn.cursor()
-
         query = """
         INSERT INTO asistencias (id_alumno, fecha, estado)
-        VALUES (%s, CURDATE(), %s)
+        VALUES (%s, %s, %s)
         """
-
-        cursor.execute(query, (id_alumno, estado))
+        cursor.execute(query, (id_alumno, fecha, estado))
         conn.commit()
-
         cursor.close()
         conn.close()
+    
     def obtener_asistencias_alumno(self, id_alumno):
         conn = self.db.get_connection()
         cursor = conn.cursor(dictionary=True)
-
         query = """
         SELECT fecha, estado
         FROM asistencias
         WHERE id_alumno = %s
         ORDER BY fecha DESC
         """
-
         cursor.execute(query, (id_alumno,))
         asistencias = cursor.fetchall()
-
         cursor.close()
         conn.close()
-
         return asistencias

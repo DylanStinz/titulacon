@@ -2,6 +2,7 @@ from models.AlumnoModel import AlumnoModel
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
+from datetime import date
 
 class AlumnoController:
 
@@ -23,15 +24,9 @@ class AlumnoController:
         return True, "Alumno registrado"
 
     def importar_excel(self, archivo):
-
-        df = pd.read_excel(
-            archivo,
-            sheet_name=0,
-            header=9
-        )
-
+        df = pd.read_excel(archivo, sheet_name=0, header=9)
+        
         for _, row in df.iterrows():
-
             control = row.iloc[1]
             nombre_excel = row.iloc[2]
 
@@ -39,37 +34,28 @@ class AlumnoController:
                 continue
 
             matricula = str(control)
-
             nombre_completo = str(nombre_excel)
+            partes = nombre_completo.strip().split()
 
-            partes = nombre_completo.split()
-
-            nombre = partes[0]
-            apellido_paterno = partes[1] if len(partes) > 1 else ""
-            apellido_materno = partes[2] if len(partes) > 2 else ""
+            apellido_paterno = partes[0] if len(partes) > 0 else ""
+            apellido_materno = partes[1] if len(partes) > 1 else ""
+            nombre = " ".join(partes[2:]) if len(partes) > 2 else ""
 
             semestre = "2"
             especialidad = "Programación"
             grupo = "D"
 
             if not self.model.existe_matricula(matricula):
-
-                self.model.crear_alumno(
-                    nombre,
-                    apellido_paterno,
-                    apellido_materno,
-                    matricula,
-                    grupo,
-                    semestre,
-                    especialidad
-                )
+                self.model.crear_alumno(nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad)
+            else:
+                id_alumno = self.model.obtener_id_por_matricula(matricula)
+                self.model.actualizar_alumno(id_alumno, nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad)
 
             id_alumno = self.model.obtener_id_por_matricula(matricula)
-            # Asistencias del primer parcial
+            
             asistencias_p1 = df.columns[4:34]
 
             for columna in asistencias_p1:
-
                 valor = row[columna]
 
                 if pd.isna(valor):
@@ -77,17 +63,12 @@ class AlumnoController:
 
                 if valor is True:
                     estado = "Asistió"
-
                 elif valor == 1 or valor == 1.0:
                     estado = "Retardo"
-
                 else:
                     estado = "Falta"
 
-                self.model.crear_asistencia(
-                    id_alumno,
-                    estado
-                )
+                self.model.crear_asistencia(id_alumno, date.today(), estado)
 
             id_materia = 2
 
@@ -96,37 +77,11 @@ class AlumnoController:
             p3 = row["Calf..2"]
 
             if pd.notna(p1):
-
-                calificacion = min(float(p1), 10)
-
-                self.model.crear_calificacion(
-                    id_alumno,
-                    id_materia,
-                    1,
-                    calificacion
-                )
-
+                self.model.crear_calificacion(id_alumno, id_materia, 1, min(float(p1), 10))
             if pd.notna(p2):
-
-                calificacion = min(float(p2), 10)
-
-                self.model.crear_calificacion(
-                    id_alumno,
-                    id_materia,
-                    2,
-                    calificacion
-                )
-
+                self.model.crear_calificacion(id_alumno, id_materia, 2, min(float(p2), 10))
             if pd.notna(p3):
-
-                calificacion = min(float(p3), 10)
-
-                self.model.crear_calificacion(
-                    id_alumno,
-                    id_materia,
-                    3,
-                    calificacion
-                )
+                self.model.crear_calificacion(id_alumno, id_materia, 3, min(float(p3), 10))
 
         return True
 
@@ -158,95 +113,16 @@ class AlumnoController:
             ws.cell(row=row_idx, column=6, value=alumno.get("grupo", ""))
             ws.cell(row=row_idx, column=7, value=alumno.get("semestre", ""))
             ws.cell(row=row_idx, column=8, value=alumno.get("especialidad", ""))
-            ws.cell(row=row_idx, column=9, value=alumno.get("estatus", ""))
+            ws.cell(row=row_idx, column=9, value=alumno.get("estatus", "Activo"))
         archivo = "Alumnos_exportados.xlsx"
         wb.save(archivo)
         return archivo
 
-    # ========== MÉTODOS NUEVOS PARA REPORTES ==========
-
-    def actualizar_alumno(self, id_alumno, nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad):
-        """Actualiza los datos de un alumno existente"""
-        if not nombre or not matricula:
-            return False, "El nombre y matrícula son obligatorios"
-        self.model.actualizar_alumno(id_alumno, nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad)
-        return True, "Alumno actualizado correctamente"
-
-    def eliminar_alumno(self, id_alumno):
-        """Elimina un alumno por su ID"""
-        self.model.eliminar_alumno(id_alumno)
-        return True, "Alumno eliminado correctamente"
-
-    def generar_reporte_alumno(self, id_alumno):
-        """Genera un reporte Excel del alumno"""
-        alumno = self.model.obtener_alumno_por_id(id_alumno)
-        if not alumno:
-            return None
-        
-        calificaciones = self.model.obtener_calificaciones_alumno(id_alumno)
-        
-        wb = Workbook()
-        ws = wb.active
-        ws.title = f"Reporte_{alumno['nombre']}"
-        
-        # Título
-        ws.merge_cells('A1:D1')
-        ws['A1'] = f"REPORTE ACADÉMICO - {alumno['nombre']} {alumno['apellido_paterno']}"
-        ws['A1'].font = Font(bold=True, size=14)
-        ws['A1'].alignment = Alignment(horizontal='center')
-        
-        # Datos del alumno
-        ws['A3'] = "DATOS DEL ALUMNO"
-        ws['A3'].font = Font(bold=True, size=12)
-        ws['A4'] = "Nombre:"
-        ws['B4'] = alumno['nombre']
-        ws['A5'] = "Apellido Paterno:"
-        ws['B5'] = alumno['apellido_paterno']
-        ws['A6'] = "Apellido Materno:"
-        ws['B6'] = alumno['apellido_materno']
-        ws['A7'] = "Matrícula:"
-        ws['B7'] = alumno['matricula']
-        ws['A8'] = "Grupo:"
-        ws['B8'] = alumno['grupo']
-        ws['A9'] = "Semestre:"
-        ws['B9'] = alumno['semestre']
-        ws['A10'] = "Especialidad:"
-        ws['B10'] = alumno['especialidad']
-        
-        # Calificaciones
-        ws['A12'] = "CALIFICACIONES"
-        ws['A12'].font = Font(bold=True, size=12)
-        ws['A13'] = "Parcial"
-        ws['B13'] = "Calificación"
-        ws['A13'].font = Font(bold=True)
-        ws['B13'].font = Font(bold=True)
-        
-        row = 14
-        p1 = p2 = p3 = 0
-        for c in calificaciones:
-            ws[f'A{row}'] = c["parcial"]
-            ws[f'B{row}'] = c["calificacion"]
-            if c["parcial"] == 1:
-                p1 = c["calificacion"]
-            elif c["parcial"] == 2:
-                p2 = c["calificacion"]
-            elif c["parcial"] == 3:
-                p3 = c["calificacion"]
-            row += 1
-        
-        promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2) if calificaciones else 0
-        
-        ws[f'A{row+1}'] = "Promedio Final:"
-        ws[f'B{row+1}'] = promedio
-        ws[f'A{row+1}'].font = Font(bold=True)
-        ws[f'B{row+1}'].font = Font(bold=True)
-        
-        # Ajustar anchos
-        for col in ['A', 'B', 'C', 'D']:
-            ws.column_dimensions[col].width = 20
-        
-        archivo = f"Reporte_{alumno['matricula']}_{alumno['nombre']}.xlsx"
-        wb.save(archivo)
-        return archivo
     def obtener_asistencias_alumno(self, id_alumno):
         return self.model.obtener_asistencias_alumno(id_alumno)
+    
+    def crear_asistencia(self, id_alumno, fecha, estado):
+        if hasattr(fecha, 'date'):
+            fecha = fecha.date()
+        self.model.crear_asistencia(id_alumno, fecha, estado)
+        return True, "Asistencia registrada correctamente"

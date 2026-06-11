@@ -79,7 +79,7 @@ def CalificacionView(page, alumno_controller, calificacion_controller):
                             alignment=ft.MainAxisAlignment.CENTER,
                             spacing=20,
                         ),
-                        ft.Text(f"📊 Porcentaje de aprobación: {stats['porcentaje']}%", size=16, color=VINO_PRINCIPAL, weight=ft.FontWeight.BOLD),
+                        ft.Text(f"📊 Porcentaje de aprobación: {stats.get('porcentaje', 0)}%", size=16, color=VINO_PRINCIPAL, weight=ft.FontWeight.BOLD),
                     ],
                     spacing=12,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
