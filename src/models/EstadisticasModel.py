@@ -42,7 +42,7 @@ class EstadisticasModel:
         cursor.close()
         conn.close()
 
-        return round(promedio or 0, 2)
+        return round(promedio, 2) if promedio else 0
 
     def total_aprobados(self):
 
