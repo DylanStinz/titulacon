@@ -70,6 +70,12 @@ def LoginView(page, auth_controller):
                             weight=ft.FontWeight.BOLD,
                             color=VINO,
                         ),
+                        # Ícono de lápiz grande (similar a pluma)
+                        ft.Icon(
+                            ft.icons.CREATE,
+                            size=80,
+                            color=VINO,
+                        ),
                         email_input,
                         pass_input,
                         ft.ElevatedButton(

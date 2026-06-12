@@ -3,7 +3,6 @@ from views.alumnoView import AlumnoView, GrupoView
 from views.calificacionView import CalificacionView
 from views.reporteView import ReporteView
 
-# 👈 AGREGAR reporte_controller como parámetro
 def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller, calificacion_controller, reporte_controller):
     VINO_PRINCIPAL = "#722F37"
     BLANCO = "#FFFFFF"
@@ -12,19 +11,29 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
     user = page.session.get("user")
     nombre_usuario = user.get("nombre", "Docente") if user else "Docente"
 
-    # Crear las vistas
-    vista_alumnos = AlumnoView(page, alumno_controller)
-    vista_grupos = GrupoView(page, grupo_controller)
-    vista_calificaciones = CalificacionView(page, alumno_controller, calificacion_controller)
-    # 👈 PASAR reporte_controller
-    vista_reportes = ReporteView(page, alumno_controller, reporte_controller)
+    grupo_seleccionado_text = ft.Text("Ningún grupo seleccionado", size=14, color=VINO_PRINCIPAL)
 
-    # Tabs para navegar
+    def on_grupo_seleccionado(grupo_dict):
+        grupo_seleccionado_text.value = f"Grupo seleccionado: {grupo_dict['grado']}° {grupo_dict['grupo']}"
+        if hasattr(vista_alumnos, 'cargar_alumnos_por_grupo'):
+            vista_alumnos.cargar_alumnos_por_grupo(grupo_dict)
+        if hasattr(vista_calificaciones, 'actualizar_por_grupo'):
+            vista_calificaciones.actualizar_por_grupo(grupo_dict)
+        if hasattr(vista_reportes, 'actualizar_por_grupo'):
+            vista_reportes.actualizar_por_grupo(grupo_dict)
+        page.update()
+
+    vista_grupos = GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado)
+    vista_alumnos = AlumnoView(page, alumno_controller, grupo_controller)
+    vista_calificaciones = CalificacionView(page, alumno_controller, calificacion_controller, grupo_controller)
+    # Aquí solo se pasan 4 argumentos, sin notificador
+    vista_reportes = ReporteView(page, alumno_controller, reporte_controller, grupo_controller)
+
     tabs = ft.Tabs(
         selected_index=0,
         tabs=[
-            ft.Tab(text="📚 Alumnos", content=ft.Container(content=vista_alumnos, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="👥 Grupos", content=ft.Container(content=vista_grupos, padding=20, alignment=ft.alignment.top_center)),
+            ft.Tab(text="📚 Alumnos", content=ft.Container(content=vista_alumnos, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📖 Calificaciones", content=ft.Container(content=vista_calificaciones, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📋 Reportes", icon=ft.icons.DESCRIPTION, content=ft.Container(content=vista_reportes, padding=20, alignment=ft.alignment.top_center)),
         ],
@@ -43,5 +52,14 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
                 ft.IconButton(icon=ft.icons.LOGOUT, icon_color=BLANCO, on_click=lambda _: page.go("/")),
             ],
         ),
-        controls=[tabs],
+        controls=[
+            ft.Column(
+                [
+                    ft.Row([grupo_seleccionado_text], alignment=ft.MainAxisAlignment.CENTER),
+                    tabs,
+                ],
+                spacing=10,
+                expand=True,
+            )
+        ],
     )

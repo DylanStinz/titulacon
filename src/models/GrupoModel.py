@@ -42,7 +42,6 @@ class GrupoModel:
         conn.close()
         return alumnos
 
-    # NUEVO MÉTODO: Actualizar grupo
     def actualizar_grupo(self, id_grupo, grado, grupo, especialidad, turno):
         conn = self.db.get_connection()
         cursor = conn.cursor()
@@ -61,3 +60,12 @@ class GrupoModel:
             return False
         finally:
             conn.close()
+
+    def eliminar_grupo(self, id_grupo):
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+        query = "DELETE FROM grupos WHERE id_grupo = %s"
+        cursor.execute(query, (id_grupo,))
+        conn.commit()
+        cursor.close()
+        conn.close()

@@ -22,3 +22,7 @@ class GrupoController:
             return False, "Completa los campos"
         self.model.actualizar_grupo(id_grupo, grado, grupo, especialidad, turno)
         return True, "Grupo actualizado"
+
+    def eliminar_grupo(self, id_grupo):
+        self.model.eliminar_grupo(id_grupo)
+        return True, "Grupo eliminado correctamente"
