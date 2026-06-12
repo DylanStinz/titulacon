@@ -357,3 +357,4 @@ def ReporteView(page, alumno_controller, reporte_controller, grupo_controller):
     container = ft.Container(content=content)
     container.actualizar_por_grupo = actualizar_por_grupo
     return container
+    

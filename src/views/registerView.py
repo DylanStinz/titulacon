@@ -155,7 +155,7 @@ def RegisterView(page, auth_controller):
                 shadow=ft.BoxShadow(
                     spread_radius=1,
                     blur_radius=10,
-                    color="#D3D3D3",
+                    color="#D3D3D3", 
                     offset=ft.Offset(0, 2),
                 ),
                 content=ft.Column(

@@ -111,3 +111,4 @@ class ReporteModel:
         cursor.close()
         conn.close()
         return True
+        

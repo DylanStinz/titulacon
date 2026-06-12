@@ -48,3 +48,4 @@ class ReporteController:
         """Actualiza un reporte existente"""
         self.model.actualizar_reporte_completo(id_reporte, titulo, descripcion, tipo_reporte, estado)
         return True, "Reporte actualizado correctamente"
+        

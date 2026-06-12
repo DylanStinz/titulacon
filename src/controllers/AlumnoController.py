@@ -129,3 +129,4 @@ class AlumnoController:
             fecha = fecha.date()
         self.model.crear_asistencia(id_alumno, fecha, estado)
         return True, "Asistencia registrada correctamente"
+        

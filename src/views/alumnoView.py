@@ -473,3 +473,4 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
         scroll=ft.ScrollMode.AUTO,
     )
     return ft.Container(content=content)
+    
