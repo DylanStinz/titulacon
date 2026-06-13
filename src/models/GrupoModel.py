@@ -5,14 +5,14 @@ class GrupoModel:
     def __init__(self):
         self.db = Database()
 
-    def crear_grupo(self, grado, grupo, especialidad, turno):
+    def crear_grupo(self, grado, grupo, especialidad, materia, turno):
         conn = self.db.get_connection()
         cursor = conn.cursor()
         query = """
-        INSERT INTO grupos (grado, grupo, especialidad, turno)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO grupos (grado, grupo, especialidad, materia, turno)
+        VALUES (%s, %s, %s, %s, %s)
         """
-        valores = (grado, grupo, especialidad, turno)
+        valores = (grado, grupo, especialidad, materia, turno)
         try:
             cursor.execute(query, valores)
             conn.commit()
@@ -26,9 +26,10 @@ class GrupoModel:
     def listar_grupos(self):
         conn = self.db.get_connection()
         cursor = conn.cursor(dictionary=True)
-        query = "SELECT * FROM grupos"
+        query = "SELECT * FROM grupos ORDER BY grado, grupo"
         cursor.execute(query)
         grupos = cursor.fetchall()
+        cursor.close()
         conn.close()
         return grupos
 
@@ -42,15 +43,15 @@ class GrupoModel:
         conn.close()
         return alumnos
 
-    def actualizar_grupo(self, id_grupo, grado, grupo, especialidad, turno):
+    def actualizar_grupo(self, id_grupo, grado, grupo, especialidad, materia, turno):
         conn = self.db.get_connection()
         cursor = conn.cursor()
         query = """
         UPDATE grupos 
-        SET grado = %s, grupo = %s, especialidad = %s, turno = %s
+        SET grado = %s, grupo = %s, especialidad = %s, materia = %s, turno = %s
         WHERE id_grupo = %s
         """
-        valores = (grado, grupo, especialidad, turno, id_grupo)
+        valores = (grado, grupo, especialidad, materia, turno, id_grupo)
         try:
             cursor.execute(query, valores)
             conn.commit()

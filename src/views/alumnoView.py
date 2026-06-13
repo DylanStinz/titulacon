@@ -64,12 +64,46 @@ def AlumnoView(page, alumno_controller, grupo_controller):
         page.update()
     # =================================
 
+    # ========== Dar de baja alumno ==========
+    def dar_de_baja(alumno_id, alumno_nombre):
+        def confirmar_baja(e):
+            ok, msg = alumno_controller.eliminar_alumno(alumno_id)
+            page.snack_bar = ft.SnackBar(ft.Text(msg, color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
+            page.snack_bar.open = True
+            dialog.open = False
+            
+            if ok:
+                cargar_alumnos_por_grupo(grupo_actual)
+                info_alumno.controls = []
+                dropdown_alumnos.value = None
+                page.update()
+            page.update()
+        
+        def cancelar_baja(e):
+            dialog.open = False
+            page.update()
+        
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("⚠️ Confirmar baja", color=VINO_OSCURO),
+            content=ft.Text(f"¿Estás seguro de dar de baja a {alumno_nombre}?\n\nSe eliminarán también sus calificaciones y asistencias."),
+            actions=[
+                ft.TextButton("Cancelar", on_click=cancelar_baja),
+                ft.ElevatedButton("Dar de baja", on_click=confirmar_baja, bgcolor="#F44336", color=BLANCO),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.dialog = dialog
+        dialog.open = True
+        page.update()
+    # ========================================
+
     def cargar_alumnos_por_grupo(grupo):
         nonlocal grupo_actual
         grupo_actual = grupo
         if grupo:
             todos = alumno_controller.obtener_alumnos()
-            filtrados = [a for a in todos if str(a.get("semestre", "")) == str(grupo["grado"]) and a.get("grupo", "") == grupo["grupo"]]
+            filtrados = [a for a in todos if str(a.get("semestre", "")) == str(grupo["grado"]) and a.get("grupo", "") == grupo["grupo"] and a.get("estatus", "Activo") == "Activo"]
         else:
             filtrados = []
         dropdown_alumnos.options = [
@@ -131,13 +165,34 @@ def AlumnoView(page, alumno_controller, grupo_controller):
                 border=ft.border.all(1, VINO_CLARO),
                 content=ft.Column(
                     [
-                        ft.Text(f"📛 Nombre: {alumno.get('nombre', '')}", size=15, color=VINO_OSCURO),
-                        ft.Text(f"📛 Apellido Paterno: {alumno.get('apellido_paterno', '')}", size=15, color=VINO_OSCURO),
-                        ft.Text(f"📛 Apellido Materno: {alumno.get('apellido_materno', '')}", size=15, color=VINO_OSCURO),
+                        ft.Row(
+                            [
+                                ft.Column(
+                                    [
+                                        ft.Text(f"📛 Nombre: {alumno.get('nombre', '')}", size=15, color=VINO_OSCURO),
+                                        ft.Text(f"📛 Apellido Paterno: {alumno.get('apellido_paterno', '')}", size=15, color=VINO_OSCURO),
+                                        ft.Text(f"📛 Apellido Materno: {alumno.get('apellido_materno', '')}", size=15, color=VINO_OSCURO),
+                                    ],
+                                    spacing=2,
+                                ),
+                                ft.ElevatedButton(
+                                    "🗑️ Dar de baja",
+                                    on_click=lambda e: dar_de_baja(alumno["id_alumno"], f"{alumno.get('nombre', '')} {alumno.get('apellido_paterno', '')}"),
+                                    icon=ft.icons.DELETE,
+                                    style=ft.ButtonStyle(
+                                        color=BLANCO,
+                                        bgcolor="#F44336",
+                                        shape=ft.RoundedRectangleBorder(radius=20),
+                                    ),
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
                         ft.Text(f"🎓 Matrícula: {alumno.get('matricula', '')}", size=15, color=VINO_OSCURO),
                         ft.Text(f"👥 Grupo: {alumno.get('grupo', '')}", size=15, color=VINO_OSCURO),
                         ft.Text(f"📚 Semestre: {alumno.get('semestre', '')}", size=15, color=VINO_OSCURO),
                         ft.Text(f"💻 Especialidad: {alumno.get('especialidad', '')}", size=15, color=VINO_OSCURO),
+                        ft.Text(f"📖 Materia: {grupo_actual.get('materia', 'Sin materia')}", size=15, color=VINO_OSCURO),                        ft.Text(f"⚡ Estatus: {alumno.get('estatus', 'Activo')}", size=15, color=VINO_OSCURO),
                         ft.Divider(),
                         ft.Text("📖 CALIFICACIONES", size=16, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
                         ft.Text(f"Parcial 1: {p1_mostrar}", size=15, color=VINO_OSCURO),
@@ -229,23 +284,29 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
             dlg_grado = ft.Dropdown(label="Grado", width=200, options=[ft.dropdown.Option(str(i)) for i in range(1, 7)])
             dlg_grupo = ft.TextField(label="Grupo", width=200)
             dlg_especialidad = ft.TextField(label="Especialidad", width=200)
+            dlg_materia = ft.TextField(label="Materia", width=200)
             dlg_turno = ft.Dropdown(label="Turno", width=200, options=[ft.dropdown.Option("Matutino"), ft.dropdown.Option("Vespertino")], value="Matutino")
+            
+
 
             def on_import_confirmar(e):
                 grado_val = dlg_grado.value
                 grupo_val = dlg_grupo.value
                 especialidad_val = dlg_especialidad.value
+                materia_val = dlg_materia.value
                 turno_val = dlg_turno.value
-                if not (grado_val and grupo_val and especialidad_val and turno_val):
-                    page.snack_bar = ft.SnackBar(ft.Text("Completa todos los campos del grupo", color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
+                    
+                if not (grado_val and grupo_val and especialidad_val and materia_val and turno_val):
+                    page.snack_bar = ft.SnackBar(ft.Text("Completa todos los campos del grupo (incluye Materia)", color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
                     page.snack_bar.open = True
                     page.update()
                     return
 
                 grupos_existentes = grupo_controller.obtener_grupos()
                 existe = any(g for g in grupos_existentes if str(g["grado"]) == grado_val and g["grupo"] == grupo_val)
+                    
                 if not existe:
-                    ok, msg = grupo_controller.guardar_grupo(grado_val, grupo_val, especialidad_val, turno_val)
+                    ok, msg = grupo_controller.guardar_grupo(grado_val, grupo_val, especialidad_val, materia_val, turno_val)
                     if not ok:
                         page.snack_bar = ft.SnackBar(ft.Text(f"Error al crear grupo: {msg}", color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
                         page.snack_bar.open = True
@@ -266,7 +327,7 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
 
             dialog = ft.AlertDialog(
                 title=ft.Text("Datos del grupo para la importación"),
-                content=ft.Column([dlg_grado, dlg_grupo, dlg_especialidad, dlg_turno], spacing=10, tight=True),
+                content=ft.Column([dlg_grado, dlg_grupo, dlg_especialidad, dlg_materia, dlg_turno], spacing=10, tight=True),
                 actions=[
                     ft.TextButton("Cancelar", on_click=lambda e: setattr(dialog, 'open', False) or page.update()),
                     ft.ElevatedButton("Importar", on_click=on_import_confirmar),
@@ -473,4 +534,3 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
         scroll=ft.ScrollMode.AUTO,
     )
     return ft.Container(content=content)
-    

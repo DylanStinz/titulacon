@@ -66,11 +66,10 @@ class AlumnoModel:
         conn = self.db.get_connection()
         cursor = conn.cursor(dictionary=True)
         query = """
-        SELECT c.parcial, c.calificacion, m.nombre_materia
-        FROM calificaciones c
-        INNER JOIN materias m ON c.id_materia = m.id_materia
-        WHERE c.id_alumno = %s
-        ORDER BY c.parcial
+        SELECT parcial, calificacion
+        FROM calificaciones
+        WHERE id_alumno = %s
+        ORDER BY parcial
         """
         cursor.execute(query, (id_alumno,))
         calificaciones = cursor.fetchall()
@@ -139,3 +138,29 @@ class AlumnoModel:
         cursor.close()
         conn.close()
         return asistencias
+    
+    def eliminar_alumno(self, id_alumno):
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE alumnos SET estatus = 'Baja' WHERE id_alumno = %s", (id_alumno,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+    def dar_de_baja_alumno(self, id_alumno):
+        """Cambia el estatus del alumno a 'Baja'"""
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+        query = "UPDATE alumnos SET estatus = 'Baja' WHERE id_alumno = %s"
+        cursor.execute(query, (id_alumno,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+    def listar_alumnos_activos(self):
+        conn = self.db.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = "SELECT * FROM alumnos WHERE estatus = 'Activo'"
+        cursor.execute(query)
+        alumnos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return alumnos

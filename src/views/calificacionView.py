@@ -41,8 +41,10 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
                         p2 = c["calificacion"]
                     elif c["parcial"] == 3:
                         p3 = c["calificacion"]
-                promedio = round((float(p1) + float(p2) + float(p3)) / 3, 2)
-                todas_calificaciones.append(promedio)
+                validas = [x for x in [p1, p2, p3] if x > 0]
+                if validas:
+                    promedio = round(sum(validas) / len(validas), 2)
+                    todas_calificaciones.append(promedio)
         if not todas_calificaciones:
             return {"promedio": 0, "aprobados": 0, "reprobados": 0, "total_alumnos": len(alumnos), "total_con_calif": 0, "porcentaje": 0}
         promedio_general = round(sum(todas_calificaciones) / len(todas_calificaciones), 2)
@@ -106,24 +108,104 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
         info.controls = []
         page.update()
 
+    def guardar_calificacion(alumno_id, parcial, valor):
+        try:
+            if valor and float(valor) >= 0:
+                nueva_calif = min(float(valor), 10)
+                calificacion_controller.actualizar_calificacion(alumno_id, parcial, nueva_calif)
+                return True
+        except Exception as ex:
+            print(f"Error: {ex}")
+        return False
+
     def mostrar_calificaciones_alumno(e):
         if not dropdown.value:
             return
-        calificaciones = calificacion_controller.obtener_calificaciones(dropdown.value)
-        p1 = p2 = p3 = 0
+        
+        alumno_id = int(dropdown.value)
+        calificaciones = alumno_controller.obtener_calificaciones_alumno(alumno_id)
+        
+        p1 = p2 = p3 = 0.0
         for c in calificaciones:
             if c["parcial"] == 1:
-                p1 = c["calificacion"]
+                p1 = float(c["calificacion"])
             elif c["parcial"] == 2:
-                p2 = c["calificacion"]
+                p2 = float(c["calificacion"])
             elif c["parcial"] == 3:
-                p3 = c["calificacion"]
-        calificaciones_validas = [float(x) for x in [p1, p2, p3] if float(x) > 0]
+                p3 = float(c["calificacion"])
+        
+        calificaciones_validas = [x for x in [p1, p2, p3] if x > 0]
         promedio = round(sum(calificaciones_validas) / len(calificaciones_validas), 2) if calificaciones_validas else 0
-        p1_mostrar = "Pendiente" if float(p1) == 0 else p1
-        p2_mostrar = "Pendiente" if float(p2) == 0 else p2
-        p3_mostrar = "Pendiente" if float(p3) == 0 else p3
+        
+        p1_mostrar = "" if p1 == 0 else str(p1)
+        p2_mostrar = "" if p2 == 0 else str(p2)
+        p3_mostrar = "" if p3 == 0 else str(p3)
+        
         estado = "⏳ En proceso" if len(calificaciones_validas) < 3 else ("✅ Aprobado" if promedio >= 6 else "❌ Reprobado")
+        estado_color = "#FF9800" if len(calificaciones_validas) < 3 else ("#4CAF50" if promedio >= 6 else "#F44336")
+        
+        p1_field = ft.TextField(
+            label="Parcial 1",
+            value=p1_mostrar,
+            width=120,
+            border_color=VINO_PRINCIPAL,
+            focused_border_color=VINO_OSCURO,
+            bgcolor=BLANCO,
+            border_radius=10,
+            filled=True,
+            fill_color=GRIS_SUAVE,
+            suffix_text="/10",
+            input_filter=ft.InputFilter(allow=True, regex_string=r"^[0-9]*\.?[0-9]?$"),
+        )
+        
+        p2_field = ft.TextField(
+            label="Parcial 2",
+            value=p2_mostrar,
+            width=120,
+            border_color=VINO_PRINCIPAL,
+            focused_border_color=VINO_OSCURO,
+            bgcolor=BLANCO,
+            border_radius=10,
+            filled=True,
+            fill_color=GRIS_SUAVE,
+            suffix_text="/10",
+            input_filter=ft.InputFilter(allow=True, regex_string=r"^[0-9]*\.?[0-9]?$"),
+        )
+        
+        p3_field = ft.TextField(
+            label="Parcial 3",
+            value=p3_mostrar,
+            width=120,
+            border_color=VINO_PRINCIPAL,
+            focused_border_color=VINO_OSCURO,
+            bgcolor=BLANCO,
+            border_radius=10,
+            filled=True,
+            fill_color=GRIS_SUAVE,
+            suffix_text="/10",
+            input_filter=ft.InputFilter(allow=True, regex_string=r"^[0-9]*\.?[0-9]?$"),
+        )
+        
+        promedio_text = ft.Text(f"🎯 Promedio: {promedio}", size=22, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL)
+        estado_text = ft.Text(estado, size=20, weight=ft.FontWeight.BOLD, color=estado_color)
+        
+        def on_guardar(e):
+            alumno_id_int = int(dropdown.value)
+            if p1_field.value and p1_field.value != p1_mostrar:
+                guardar_calificacion(alumno_id_int, 1, p1_field.value)
+            if p2_field.value and p2_field.value != p2_mostrar:
+                guardar_calificacion(alumno_id_int, 2, p2_field.value)
+            if p3_field.value and p3_field.value != p3_mostrar:
+                guardar_calificacion(alumno_id_int, 3, p3_field.value)
+            
+            page.snack_bar = ft.SnackBar(ft.Text("✅ Calificaciones guardadas", color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
+            page.snack_bar.open = True
+            
+            # Recargar todo
+            mostrar_calificaciones_alumno(None)
+            mostrar_estadisticas()
+            page.update()
+        
         info.controls = [
             ft.Container(
                 padding=20,
@@ -132,12 +214,20 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
                 border=ft.border.all(1, VINO_CLARO),
                 content=ft.Column(
                     [
-                        ft.Text(f"📖 Parcial 1: {p1_mostrar}", size=18, color=VINO_OSCURO),
-                        ft.Text(f"📖 Parcial 2: {p2_mostrar}", size=18, color=VINO_OSCURO),
-                        ft.Text(f"📖 Parcial 3: {p3_mostrar}", size=18, color=VINO_OSCURO),
+                        ft.Row([p1_field, p2_field, p3_field], alignment=ft.MainAxisAlignment.CENTER, spacing=15),
+                        ft.ElevatedButton(
+                            "💾 Guardar calificaciones",
+                            on_click=on_guardar,
+                            icon=ft.icons.SAVE,
+                            style=ft.ButtonStyle(
+                                color=BLANCO,
+                                bgcolor=VINO_PRINCIPAL,
+                                shape=ft.RoundedRectangleBorder(radius=20),
+                            ),
+                        ),
                         ft.Divider(),
-                        ft.Text(f"🎯 Promedio Actual: {promedio}", size=22, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
-                        ft.Text(estado, size=20, weight=ft.FontWeight.BOLD, color="#4CAF50" if "Aprobado" in estado else ("#F44336" if "Reprobado" in estado else "#FF9800")),
+                        promedio_text,
+                        estado_text,
                     ],
                     spacing=15,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -156,12 +246,12 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
 
     content = ft.Column(
         [
-            ft.Text("📖 Consulta de Calificaciones", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
+            ft.Text("📖 Consulta y Edición de Calificaciones", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
             ft.Divider(),
             estadisticas_container,
             ft.Divider(),
             dropdown,
-            ft.Container(content=info, height=300, width=450),
+            ft.Container(content=info, width=500),
         ],
         spacing=20,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,

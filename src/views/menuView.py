@@ -5,6 +5,7 @@ from views.reporteView import ReporteView
 from views.riesgoView import RiesgoView
 from views.actividadesView import ActividadesView
 from controllers.ActividadController import ActividadController
+from views.altaAlumnoView import AltaAlumnoView
 
 def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller, calificacion_controller, reporte_controller):
     VINO_PRINCIPAL = "#722F37"
@@ -20,8 +21,37 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
     riesgo_controller = RiesgoController()
     actividad_controller = ActividadController()
 
+    def refrescar_todo(e):
+        """Refresca todas las vistas"""
+        if grupo_actual:
+            if hasattr(vista_alumnos, 'cargar_alumnos_por_grupo'):
+                vista_alumnos.cargar_alumnos_por_grupo(grupo_actual)
+            if hasattr(vista_calificaciones, 'actualizar_por_grupo'):
+                vista_calificaciones.actualizar_por_grupo(grupo_actual)
+            if hasattr(vista_reportes, 'actualizar_por_grupo'):
+                vista_reportes.actualizar_por_grupo(grupo_actual)
+            if hasattr(vista_riesgos, 'actualizar_por_grupo'):
+                vista_riesgos.actualizar_por_grupo(grupo_actual)
+            if hasattr(vista_actividades, 'actualizar_por_grupo'):
+                vista_actividades.actualizar_por_grupo(grupo_actual)
+            if hasattr(vista_grupos, 'cargar_grupos'):
+                vista_grupos.cargar_grupos()
+        
+        page.snack_bar = ft.SnackBar(
+            ft.Text("🔄 Datos actualizados", color=ft.colors.BLACK), 
+            bgcolor=ft.colors.GREY_200,
+            duration=1500
+        )
+        page.snack_bar.open = True
+        page.update()
+
+    grupo_actual = None
+
     def on_grupo_seleccionado(grupo_dict):
-        grupo_seleccionado_text.value = f"Grupo seleccionado: {grupo_dict['grado']}° {grupo_dict['grupo']}"
+        nonlocal grupo_actual
+        grupo_actual = grupo_dict
+        grupo_seleccionado_text.value = f"✅ Grupo seleccionado: {grupo_dict['grado']}° {grupo_dict['grupo']}"
+        
         if hasattr(vista_alumnos, 'cargar_alumnos_por_grupo'):
             vista_alumnos.cargar_alumnos_por_grupo(grupo_dict)
         if hasattr(vista_calificaciones, 'actualizar_por_grupo'):
@@ -32,6 +62,7 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
             vista_riesgos.actualizar_por_grupo(grupo_dict)
         if hasattr(vista_actividades, 'actualizar_por_grupo'):
             vista_actividades.actualizar_por_grupo(grupo_dict)
+        
         page.update()
 
     vista_grupos = GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado)
@@ -40,7 +71,7 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
     vista_reportes = ReporteView(page, alumno_controller, reporte_controller, grupo_controller)
     vista_riesgos = RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller)
     vista_actividades = ActividadesView(page, actividad_controller, grupo_controller)
-
+    vista_alta_alumno = AltaAlumnoView(page, alumno_controller, grupo_controller)
     tabs = ft.Tabs(
         selected_index=0,
         tabs=[
@@ -50,6 +81,8 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
             ft.Tab(text="📋 Reportes", icon=ft.icons.DESCRIPTION, content=ft.Container(content=vista_reportes, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="⚠️ Riesgo Académico", icon=ft.icons.WARNING, content=ft.Container(content=vista_riesgos, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📝 Actividades", icon=ft.icons.ASSIGNMENT, content=ft.Container(content=vista_actividades, padding=20, alignment=ft.alignment.top_center)),
+            ft.Tab(text="📝 Alta de Alumnos", icon=ft.icons.ADD, content=ft.Container(content=vista_alta_alumno, padding=20, alignment=ft.alignment.top_center)),
+
         ],
         expand=True,
         indicator_color=VINO_PRINCIPAL,
@@ -63,7 +96,18 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
             bgcolor=VINO_PRINCIPAL,
             center_title=True,
             actions=[
-                ft.IconButton(icon=ft.icons.LOGOUT, icon_color=BLANCO, on_click=lambda _: page.go("/")),
+                ft.IconButton(
+                    icon=ft.icons.REFRESH, 
+                    icon_color=BLANCO, 
+                    on_click=refrescar_todo,
+                    tooltip="Refrescar datos",
+                ),
+                ft.IconButton(
+                    icon=ft.icons.LOGOUT, 
+                    icon_color=BLANCO, 
+                    on_click=lambda _: page.go("/"),
+                    tooltip="Cerrar sesión",
+                ),
             ],
         ),
         controls=[

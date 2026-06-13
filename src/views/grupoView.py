@@ -29,7 +29,7 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
     # ---------- DROPDOWN DE SELECCIÓN DE GRUPO ----------
     dropdown_grupos = ft.Dropdown(
         label="Seleccionar grupo",
-        width=300,
+        width=400,
         hint_text="Elige un grado y grupo",
         **estilo_dropdown,
     )
@@ -59,7 +59,95 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
 
     dropdown_grupos.on_change = on_dropdown_change
 
-    # ---------- FORMULARIO DE REGISTRO / EDICIÓN ----------
+    # ========== GESTIÓN DE MATERIAS (sección completa, sin cambios) ==========
+    materias_container = ft.Column(spacing=10)
+    materia_nombre = ft.TextField(label="Nombre de la materia", width=300, **estilo_textfield)
+    materia_semestre = ft.Dropdown(
+        label="Semestre",
+        width=150,
+        options=[ft.dropdown.Option(str(i)) for i in range(1, 7)],
+        **estilo_dropdown,
+    )
+    materia_especialidad = ft.TextField(label="Especialidad", width=300, **estilo_textfield)
+
+    def cargar_materias():
+        materias = grupo_controller.obtener_materias()
+        materias_container.controls.clear()
+        for m in materias:
+            materias_container.controls.append(
+                ft.Container(
+                    padding=10,
+                    bgcolor=BLANCO,
+                    border_radius=10,
+                    border=ft.border.all(1, VINO_CLARO),
+                    content=ft.Row(
+                        [
+                            ft.Icon(ft.icons.BOOK, color=VINO_PRINCIPAL),
+                            ft.Column(
+                                [
+                                    ft.Text(m["nombre_materia"], weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+                                    ft.Text(f"Semestre: {m['semestre']} | {m['especialidad']}", size=12, color=VINO_CLARO),
+                                ],
+                                spacing=2,
+                            ),
+                            ft.IconButton(
+                                icon=ft.icons.DELETE,
+                                icon_color="#F44336",
+                                on_click=lambda e, id_m=m["id_materia"]: eliminar_materia(id_m),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                )
+            )
+        page.update()
+
+    def guardar_materia(e):
+        if not materia_nombre.value or not materia_semestre.value or not materia_especialidad.value:
+            page.snack_bar = ft.SnackBar(ft.Text("⚠️ Completa todos los campos", color=VINO_OSCURO), bgcolor=BLANCO)
+            page.snack_bar.open = True
+            page.update()
+            return
+        
+        ok, msg = grupo_controller.guardar_materia(
+            materia_nombre.value,
+            materia_semestre.value,
+            materia_especialidad.value
+        )
+        
+        page.snack_bar = ft.SnackBar(ft.Text(msg, color=VINO_OSCURO), bgcolor=BLANCO)
+        page.snack_bar.open = True
+        
+        if ok:
+            materia_nombre.value = ""
+            materia_semestre.value = None
+            materia_especialidad.value = ""
+            cargar_materias()
+        
+        page.update()
+
+    def eliminar_materia(id_materia):
+        def confirmar(e):
+            ok, msg = grupo_controller.eliminar_materia(id_materia)
+            page.snack_bar = ft.SnackBar(ft.Text(msg, color=VINO_OSCURO), bgcolor=BLANCO)
+            page.snack_bar.open = True
+            dialog.open = False
+            cargar_materias()
+            page.update()
+        
+        dialog = ft.AlertDialog(
+            title=ft.Text("⚠️ Confirmar eliminación", color=VINO_OSCURO),
+            content=ft.Text("¿Eliminar esta materia?"),
+            actions=[
+                ft.TextButton("Cancelar", on_click=lambda e: setattr(dialog, 'open', False) or page.update()),
+                ft.ElevatedButton("Eliminar", on_click=confirmar, bgcolor="#F44336", color=BLANCO),
+            ],
+        )
+        page.dialog = dialog
+        dialog.open = True
+        page.update()
+
+    # ---------- FORMULARIO DE REGISTRO / EDICIÓN DE GRUPOS ----------
     grado = ft.Dropdown(
         label="Grado",
         width=160,
@@ -69,6 +157,15 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
 
     grupo = ft.TextField(label="Grupo", width=160, **estilo_textfield)
     especialidad = ft.TextField(label="Especialidad", width=340, **estilo_textfield)
+    
+    # CAMPO MATERIA COMO TEXTFIELD (ya no es dropdown)
+    materia_field = ft.TextField(
+        label="Materia",
+        width=340,
+        **estilo_textfield,
+        value="Programación"
+    )
+    
     turno = ft.Dropdown(
         label="Turno",
         width=340,
@@ -84,13 +181,14 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
         grupos = grupo_controller.obtener_grupos()
 
         for g in grupos:
-            alumnos = grupo_controller.obtener_alumnos_grupo(g["grupo"])  # o usa id_grupo
+            alumnos = grupo_controller.obtener_alumnos_grupo(g["grupo"])
 
             def editar_grupo(e, grupo_data=g):
                 grupo_editando["id"] = grupo_data["id_grupo"]
                 grado.value = str(grupo_data["grado"])
                 grupo.value = grupo_data["grupo"]
                 especialidad.value = grupo_data["especialidad"]
+                materia_field.value = grupo_data.get("materia", "")
                 turno.value = grupo_data["turno"]
                 page.update()
 
@@ -120,7 +218,7 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
                                                 color=VINO_OSCURO,
                                             ),
                                             ft.Text(
-                                                f"{g['especialidad']} | {g['turno']}",
+                                                f"{g.get('materia', 'Sin materia')} | {g['especialidad']} | {g['turno']}",
                                                 size=13,
                                                 color=VINO_PRINCIPAL,
                                             ),
@@ -180,9 +278,9 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
         page.update()
 
     def guardar_grupo(e):
-        if not (grado.value and grupo.value and especialidad.value and turno.value):
+        if not (grado.value and grupo.value and especialidad.value and materia_field.value and turno.value):
             page.snack_bar = ft.SnackBar(
-                ft.Text("⚠️ Completa todos los campos", color=VINO_OSCURO),
+                ft.Text("⚠️ Completa todos los campos (Grado, Grupo, Especialidad, Materia, Turno)", color=VINO_OSCURO),
                 bgcolor=BLANCO,
                 behavior=ft.SnackBarBehavior.FLOATING,
                 shape=ft.RoundedRectangleBorder(radius=8),
@@ -197,6 +295,7 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
                 grado.value,
                 grupo.value,
                 especialidad.value,
+                materia_field.value,
                 turno.value,
             )
             grupo_editando["id"] = None
@@ -205,6 +304,7 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
                 grado.value,
                 grupo.value,
                 especialidad.value,
+                materia_field.value,
                 turno.value,
             )
 
@@ -220,15 +320,16 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
             grado.value = None
             grupo.value = ""
             especialidad.value = ""
+            materia_field.value = "Programación"
             turno.value = None
             cargar_grupos()
 
         page.update()
 
-    # Cargar grupos al inicio
+    # Inicializar
+    cargar_materias()
     cargar_grupos()
 
-    # Retornar un control (Column) que se usará dentro del Tab
     return ft.Column(
         scroll=ft.ScrollMode.AUTO,
         controls=[
@@ -236,7 +337,42 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
                 padding=ft.padding.symmetric(horizontal=40, vertical=20),
                 content=ft.Column(
                     [
-                        # Selector de grupo (dropdown)
+                        # Sección de Materias
+                        ft.Container(
+                            padding=20,
+                            bgcolor=BLANCO,
+                            border_radius=20,
+                            shadow=ft.BoxShadow(blur_radius=8, color="#D3D3D3", offset=ft.Offset(0, 2)),
+                            content=ft.Column(
+                                [
+                                    ft.Text("📚 Gestión de Materias", size=20, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+                                    ft.Row([materia_nombre, materia_semestre], alignment=ft.MainAxisAlignment.CENTER, spacing=20),
+                                    ft.Row([materia_especialidad], alignment=ft.MainAxisAlignment.CENTER),
+                                    ft.Row(
+                                        [
+                                            ft.ElevatedButton(
+                                                "➕ Agregar Materia",
+                                                on_click=guardar_materia,
+                                                icon=ft.icons.ADD,
+                                                style=ft.ButtonStyle(
+                                                    color=BLANCO,
+                                                    bgcolor=VINO_PRINCIPAL,
+                                                    shape=ft.RoundedRectangleBorder(radius=30),
+                                                ),
+                                            ),
+                                        ],
+                                        alignment=ft.MainAxisAlignment.CENTER,
+                                    ),
+                                    ft.Divider(),
+                                    ft.Text("Materias registradas:", size=14, weight=ft.FontWeight.BOLD),
+                                    materias_container,
+                                ],
+                                spacing=15,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            ),
+                        ),
+                        ft.Divider(color=VINO_CLARO, height=2, thickness=1),
+                        # Selector de grupo
                         ft.Container(
                             padding=20,
                             bgcolor=BLANCO,
@@ -267,6 +403,7 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
                                 [
                                     ft.Row([grado, grupo], alignment=ft.MainAxisAlignment.CENTER, spacing=20),
                                     especialidad,
+                                    materia_field,   # <--- TextField
                                     turno,
                                     ft.ElevatedButton(
                                         "Guardar grupo",
