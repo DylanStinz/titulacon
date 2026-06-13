@@ -8,6 +8,14 @@ def ActividadesView(page, actividad_controller, grupo_controller):
     BLANCO = "#FFFFFF"
     GRIS_MUY_SUAVE = "#FAFAFA"
 
+    estilo_dropdown = {
+        "border_color": VINO_PRINCIPAL,
+        "focused_border_color": VINO_OSCURO,
+        "bgcolor": BLANCO,
+        "border_radius": 12,
+        "filled": True,
+        "fill_color": GRIS_MUY_SUAVE,
+    }
     estilo_textfield = {
         "border_color": VINO_PRINCIPAL,
         "focused_border_color": VINO_OSCURO,
@@ -21,6 +29,14 @@ def ActividadesView(page, actividad_controller, grupo_controller):
     grupo_actual = None
     lista_actividades = ft.Column(spacing=15)
 
+    # Selector de grupo
+    selector_grupo = ft.Dropdown(
+        label="Seleccionar grupo",
+        width=400,
+        options=[],
+        **estilo_dropdown,
+    )
+
     titulo = ft.TextField(label="Título", width=400, **estilo_textfield)
     descripcion = ft.TextField(label="Descripción", multiline=True, min_lines=3, max_lines=5, width=400, **estilo_textfield)
     fecha_limite = ft.TextField(label="Fecha límite (YYYY-MM-DD)", width=200, **estilo_textfield)
@@ -28,11 +44,35 @@ def ActividadesView(page, actividad_controller, grupo_controller):
 
     actividad_editando = {"id": None}
 
-    def actualizar_por_grupo(grupo_dict):
-        nonlocal grupo_actual
-        grupo_actual = grupo_dict
-        cargar_actividades()
+    def cargar_grupos():
+        grupos = grupo_controller.obtener_grupos()
+        opts = []
+        for g in grupos:
+            opts.append(ft.dropdown.Option(
+                key=str(g["id_grupo"]),
+                text=f"{g['grado']}° {g['grupo']} - {g['especialidad']} ({g['turno']})",
+                data=g
+            ))
+        selector_grupo.options = opts
+        if opts and not selector_grupo.value:
+            selector_grupo.value = opts[0].key
+            on_grupo_seleccionado(None)
         page.update()
+
+    def on_grupo_seleccionado(e):
+        if selector_grupo.value:
+            grupo_data = next((opt.data for opt in selector_grupo.options if opt.key == selector_grupo.value), None)
+            if grupo_data:
+                nonlocal grupo_actual
+                grupo_actual = grupo_data
+                cargar_actividades()
+        else:
+            grupo_actual = None
+            lista_actividades.controls.clear()
+            lista_actividades.controls.append(ft.Text("Selecciona un grupo para ver sus actividades", italic=True, color=VINO_PRINCIPAL))
+        page.update()
+
+    selector_grupo.on_change = on_grupo_seleccionado
 
     def cargar_actividades():
         lista_actividades.controls.clear()
@@ -159,6 +199,9 @@ def ActividadesView(page, actividad_controller, grupo_controller):
             cargar_actividades()
         page.update()
 
+    # Cargar grupos al iniciar
+    cargar_grupos()
+
     return ft.Column(
         scroll=ft.ScrollMode.AUTO,
         controls=[
@@ -174,6 +217,7 @@ def ActividadesView(page, actividad_controller, grupo_controller):
                             shadow=ft.BoxShadow(blur_radius=8, color="#D3D3D3", offset=ft.Offset(0, 2)),
                             content=ft.Column(
                                 [
+                                    selector_grupo,
                                     ft.Row([titulo, asignatura], alignment=ft.MainAxisAlignment.CENTER, spacing=20),
                                     descripcion,
                                     ft.Row([fecha_limite], alignment=ft.MainAxisAlignment.CENTER),

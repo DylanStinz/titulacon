@@ -2,13 +2,9 @@ import flet as ft
 from views.alumnoView import AlumnoView, GrupoView
 from views.calificacionView import CalificacionView
 from views.reporteView import ReporteView
-<<<<<<< HEAD
 from views.riesgoView import RiesgoView
 from views.actividadesView import ActividadesView
 from controllers.ActividadController import ActividadController
-=======
-from views.riesgoView import RiesgoView  # 👈 Cambia a RiesgoView
->>>>>>> 6f9037daee913d05c4b28247e360e6270b6bf919
 
 def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller, calificacion_controller, reporte_controller):
     VINO_PRINCIPAL = "#722F37"
@@ -20,19 +16,10 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
 
     grupo_seleccionado_text = ft.Text("Ningún grupo seleccionado", size=14, color=VINO_PRINCIPAL)
 
-<<<<<<< HEAD
-
     from controllers.RiesgoController import RiesgoController
     riesgo_controller = RiesgoController()
-
     actividad_controller = ActividadController()
 
-=======
-    # Crear el controlador de riesgo aquí o recibirlo como parámetro
-    from controllers.RiesgoController import RiesgoController
-    riesgo_controller = RiesgoController()
-
->>>>>>> 6f9037daee913d05c4b28247e360e6270b6bf919
     def on_grupo_seleccionado(grupo_dict):
         grupo_seleccionado_text.value = f"Grupo seleccionado: {grupo_dict['grado']}° {grupo_dict['grupo']}"
         if hasattr(vista_alumnos, 'cargar_alumnos_por_grupo'):
@@ -43,23 +30,16 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
             vista_reportes.actualizar_por_grupo(grupo_dict)
         if hasattr(vista_riesgos, 'actualizar_por_grupo'):
             vista_riesgos.actualizar_por_grupo(grupo_dict)
-<<<<<<< HEAD
         if hasattr(vista_actividades, 'actualizar_por_grupo'):
             vista_actividades.actualizar_por_grupo(grupo_dict)
-=======
->>>>>>> 6f9037daee913d05c4b28247e360e6270b6bf919
         page.update()
 
     vista_grupos = GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado)
     vista_alumnos = AlumnoView(page, alumno_controller, grupo_controller)
     vista_calificaciones = CalificacionView(page, alumno_controller, calificacion_controller, grupo_controller)
     vista_reportes = ReporteView(page, alumno_controller, reporte_controller, grupo_controller)
-<<<<<<< HEAD
     vista_riesgos = RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller)
     vista_actividades = ActividadesView(page, actividad_controller, grupo_controller)
-=======
-    vista_riesgos = RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller)  # 👈 Crear la vista
->>>>>>> 6f9037daee913d05c4b28247e360e6270b6bf919
 
     tabs = ft.Tabs(
         selected_index=0,
@@ -68,12 +48,8 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
             ft.Tab(text="📚 Alumnos", content=ft.Container(content=vista_alumnos, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📖 Calificaciones", content=ft.Container(content=vista_calificaciones, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📋 Reportes", icon=ft.icons.DESCRIPTION, content=ft.Container(content=vista_reportes, padding=20, alignment=ft.alignment.top_center)),
-<<<<<<< HEAD
             ft.Tab(text="⚠️ Riesgo Académico", icon=ft.icons.WARNING, content=ft.Container(content=vista_riesgos, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📝 Actividades", icon=ft.icons.ASSIGNMENT, content=ft.Container(content=vista_actividades, padding=20, alignment=ft.alignment.top_center)),
-=======
-            ft.Tab(text="⚠️ Riesgo Académico", icon=ft.icons.WARNING, content=ft.Container(content=vista_riesgos, padding=20, alignment=ft.alignment.top_center))
->>>>>>> 6f9037daee913d05c4b28247e360e6270b6bf919
         ],
         expand=True,
         indicator_color=VINO_PRINCIPAL,
