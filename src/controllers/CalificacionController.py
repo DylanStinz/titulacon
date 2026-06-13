@@ -14,5 +14,5 @@ class CalificacionController:
         return self.model.obtener_calificaciones_alumno(
             id_alumno
         )
-    def actualizar_calificacion(self, id_alumno, parcial, nueva_calificacion):
-        return self.model.actualizar_calificacion(id_alumno, parcial, nueva_calificacion)
+    def actualizar_calificacion(self, id_alumno, parcial, nueva_calificacion, id_materia):
+        return self.model.actualizar_calificacion(id_alumno, parcial, nueva_calificacion, id_materia)

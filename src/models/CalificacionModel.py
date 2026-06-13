@@ -36,24 +36,23 @@ class CalificacionModel:
         conn.close()
 
         return datos
-    def actualizar_calificacion(self, id_alumno, parcial, nueva_calificacion):
+    def actualizar_calificacion(self, id_alumno, parcial, nueva_calificacion, id_materia):
         conn = self.db.get_connection()
         cursor = conn.cursor()
         
-        # Verificar si ya existe la calificación
-        query_check = "SELECT id_calificacion FROM calificaciones WHERE id_alumno = %s AND parcial = %s"
-        cursor.execute(query_check, (id_alumno, parcial))
+        query_check = "SELECT id_calificacion FROM calificaciones WHERE id_alumno = %s AND parcial = %s AND id_materia = %s"
+        cursor.execute(query_check, (id_alumno, parcial, id_materia))
         existe = cursor.fetchone()
         
         if existe:
-            query = "UPDATE calificaciones SET calificacion = %s WHERE id_alumno = %s AND parcial = %s"
-            cursor.execute(query, (nueva_calificacion, id_alumno, parcial))
+            query = "UPDATE calificaciones SET calificacion = %s WHERE id_alumno = %s AND parcial = %s AND id_materia = %s"
+            cursor.execute(query, (nueva_calificacion, id_alumno, parcial, id_materia))
         else:
             query = """
-            INSERT INTO calificaciones (id_alumno, parcial, calificacion, fecha_registro)
-            VALUES (%s, %s, %s, CURDATE())
+            INSERT INTO calificaciones (id_alumno, id_materia, parcial, calificacion, fecha_registro)
+            VALUES (%s, %s, %s, %s, CURDATE())
             """
-            cursor.execute(query, (id_alumno, parcial, nueva_calificacion))
+            cursor.execute(query, (id_alumno, id_materia, parcial, nueva_calificacion))
         
         conn.commit()
         cursor.close()

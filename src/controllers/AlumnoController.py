@@ -13,8 +13,8 @@ class AlumnoController:
     def obtener_alumnos(self):
         return self.model.listar_alumnos_activos()
 
-    def obtener_calificaciones_alumno(self, id_alumno):
-        return self.model.obtener_calificaciones_alumno(id_alumno)
+    def obtener_calificaciones_alumno(self, id_alumno, id_materia=None):
+        return self.model.obtener_calificaciones_alumno(id_alumno, id_materia)
 
     def guardar_alumno(self, nombre, apellido_paterno, apellido_materno, matricula, grupo, semestre, especialidad):
         if not nombre:

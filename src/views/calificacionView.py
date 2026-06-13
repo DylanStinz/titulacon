@@ -9,8 +9,19 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
 
     info = ft.Column()
     estadisticas_container = ft.Column()
-    dropdown = ft.Dropdown(
+    
+    dropdown_alumnos = ft.Dropdown(
         label="Seleccionar Alumno",
+        width=400,
+        options=[],
+        border_color=VINO_PRINCIPAL,
+        focused_border_color=VINO_OSCURO,
+        bgcolor=BLANCO,
+        border_radius=10,
+    )
+    
+    dropdown_materias = ft.Dropdown(
+        label="Seleccionar Materia",
         width=400,
         options=[],
         border_color=VINO_PRINCIPAL,
@@ -20,6 +31,16 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
     )
 
     grupo_actual = None
+    materias = []
+
+    def cargar_materias():
+        nonlocal materias
+        materias = grupo_controller.obtener_materias()
+        opciones = [ft.dropdown.Option(str(m["id_materia"]), m["nombre_materia"]) for m in materias]
+        dropdown_materias.options = opciones
+        if opciones:
+            dropdown_materias.value = opciones[0].key
+        page.update()
 
     def obtener_alumnos_grupo(grupo):
         if not grupo:
@@ -27,11 +48,11 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
         todos = alumno_controller.obtener_alumnos()
         return [a for a in todos if str(a.get("semestre", "")) == str(grupo["grado"]) and a.get("grupo", "") == grupo["grupo"]]
 
-    def calcular_estadisticas_grupo(grupo):
+    def calcular_estadisticas_grupo(grupo, id_materia):
         alumnos = obtener_alumnos_grupo(grupo)
         todas_calificaciones = []
         for alumno in alumnos:
-            califs = alumno_controller.obtener_calificaciones_alumno(alumno["id_alumno"])
+            califs = alumno_controller.obtener_calificaciones_alumno(alumno["id_alumno"], id_materia)
             if califs:
                 p1 = p2 = p3 = 0
                 for c in califs:
@@ -61,8 +82,13 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
         }
 
     def mostrar_estadisticas():
-        stats = calcular_estadisticas_grupo(grupo_actual)
-        grupo_texto = f"{grupo_actual['grado']}° {grupo_actual['grupo']}" if grupo_actual else "No seleccionado"
+        if not grupo_actual or not dropdown_materias.value:
+            estadisticas_container.controls = []
+            page.update()
+            return
+        stats = calcular_estadisticas_grupo(grupo_actual, int(dropdown_materias.value))
+        materia_nombre = next((m["nombre_materia"] for m in materias if str(m["id_materia"]) == dropdown_materias.value), "Materia")
+        grupo_texto = f"{grupo_actual['grado']}° {grupo_actual['grupo']}"
         estadisticas_container.controls = [
             ft.Container(
                 padding=20,
@@ -71,7 +97,7 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
                 border=ft.border.all(1, VINO_CLARO),
                 content=ft.Column(
                     [
-                        ft.Row([ft.Icon(ft.icons.ANALYTICS, color=VINO_PRINCIPAL), ft.Text(f"📊 Estadísticas del Grupo {grupo_texto}", size=18, weight=ft.FontWeight.BOLD, color=VINO_OSCURO)], spacing=10),
+                        ft.Row([ft.Icon(ft.icons.ANALYTICS, color=VINO_PRINCIPAL), ft.Text(f"📊 Estadísticas - {materia_nombre} - Grupo {grupo_texto}", size=18, weight=ft.FontWeight.BOLD, color=VINO_OSCURO)], spacing=10),
                         ft.Divider(color=VINO_CLARO),
                         ft.Text(f"👥 Total alumnos en el grupo: {stats['total_alumnos']}", size=15, color=VINO_OSCURO),
                         ft.Text(f"📈 Promedio general del grupo: {stats['promedio']}", size=15, color=VINO_OSCURO),
@@ -94,36 +120,37 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
 
     def cargar_alumnos_dropdown():
         if not grupo_actual:
-            dropdown.options = []
-            dropdown.value = None
+            dropdown_alumnos.options = []
+            dropdown_alumnos.value = None
             info.controls = []
             page.update()
             return
         alumnos = obtener_alumnos_grupo(grupo_actual)
-        dropdown.options = [
+        dropdown_alumnos.options = [
             ft.dropdown.Option(str(a["id_alumno"]), f'{a["nombre"]} {a["apellido_paterno"]} ({a.get("grupo", "")})')
             for a in alumnos
         ]
-        dropdown.value = None
+        dropdown_alumnos.value = None
         info.controls = []
         page.update()
 
-    def guardar_calificacion(alumno_id, parcial, valor):
+    def guardar_calificacion(alumno_id, parcial, valor, id_materia):
         try:
             if valor and float(valor) >= 0:
                 nueva_calif = min(float(valor), 10)
-                calificacion_controller.actualizar_calificacion(alumno_id, parcial, nueva_calif)
+                calificacion_controller.actualizar_calificacion(alumno_id, parcial, nueva_calif, id_materia)
                 return True
         except Exception as ex:
             print(f"Error: {ex}")
         return False
 
     def mostrar_calificaciones_alumno(e):
-        if not dropdown.value:
+        if not dropdown_alumnos.value or not dropdown_materias.value:
             return
         
-        alumno_id = int(dropdown.value)
-        calificaciones = alumno_controller.obtener_calificaciones_alumno(alumno_id)
+        alumno_id = int(dropdown_alumnos.value)
+        id_materia = int(dropdown_materias.value)
+        calificaciones = alumno_controller.obtener_calificaciones_alumno(alumno_id, id_materia)
         
         p1 = p2 = p3 = 0.0
         for c in calificaciones:
@@ -190,18 +217,17 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
         estado_text = ft.Text(estado, size=20, weight=ft.FontWeight.BOLD, color=estado_color)
         
         def on_guardar(e):
-            alumno_id_int = int(dropdown.value)
+            alumno_id_int = int(dropdown_alumnos.value)
+            id_materia_int = int(dropdown_materias.value)
             if p1_field.value and p1_field.value != p1_mostrar:
-                guardar_calificacion(alumno_id_int, 1, p1_field.value)
+                guardar_calificacion(alumno_id_int, 1, p1_field.value, id_materia_int)
             if p2_field.value and p2_field.value != p2_mostrar:
-                guardar_calificacion(alumno_id_int, 2, p2_field.value)
+                guardar_calificacion(alumno_id_int, 2, p2_field.value, id_materia_int)
             if p3_field.value and p3_field.value != p3_mostrar:
-                guardar_calificacion(alumno_id_int, 3, p3_field.value)
+                guardar_calificacion(alumno_id_int, 3, p3_field.value, id_materia_int)
             
             page.snack_bar = ft.SnackBar(ft.Text("✅ Calificaciones guardadas", color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
             page.snack_bar.open = True
-            
-            # Recargar todo
             mostrar_calificaciones_alumno(None)
             mostrar_estadisticas()
             page.update()
@@ -236,21 +262,27 @@ def CalificacionView(page, alumno_controller, calificacion_controller, grupo_con
         ]
         page.update()
 
-    dropdown.on_change = mostrar_calificaciones_alumno
+    dropdown_alumnos.on_change = mostrar_calificaciones_alumno
+    dropdown_materias.on_change = lambda e: (mostrar_estadisticas(), cargar_alumnos_dropdown(), mostrar_calificaciones_alumno(None))
 
     def actualizar_por_grupo(grupo):
         nonlocal grupo_actual
         grupo_actual = grupo
+        cargar_materias()
         mostrar_estadisticas()
         cargar_alumnos_dropdown()
+
+    # Inicializar materias
+    cargar_materias()
 
     content = ft.Column(
         [
             ft.Text("📖 Consulta y Edición de Calificaciones", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
             ft.Divider(),
+            ft.Row([dropdown_materias], alignment=ft.MainAxisAlignment.CENTER),
             estadisticas_container,
             ft.Divider(),
-            dropdown,
+            dropdown_alumnos,
             ft.Container(content=info, width=500),
         ],
         spacing=20,

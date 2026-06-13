@@ -62,16 +62,25 @@ class AlumnoModel:
         cursor.close()
         conn.close()
 
-    def obtener_calificaciones_alumno(self, id_alumno):
+    def obtener_calificaciones_alumno(self, id_alumno, id_materia=None):
         conn = self.db.get_connection()
         cursor = conn.cursor(dictionary=True)
-        query = """
-        SELECT parcial, calificacion
-        FROM calificaciones
-        WHERE id_alumno = %s
-        ORDER BY parcial
-        """
-        cursor.execute(query, (id_alumno,))
+        if id_materia:
+            query = """
+            SELECT parcial, calificacion
+            FROM calificaciones
+            WHERE id_alumno = %s AND id_materia = %s
+            ORDER BY parcial
+            """
+            cursor.execute(query, (id_alumno, id_materia))
+        else:
+            query = """
+            SELECT parcial, calificacion
+            FROM calificaciones
+            WHERE id_alumno = %s
+            ORDER BY parcial
+            """
+            cursor.execute(query, (id_alumno,))
         calificaciones = cursor.fetchall()
         cursor.close()
         conn.close()
