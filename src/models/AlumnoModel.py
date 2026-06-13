@@ -121,28 +121,39 @@ class AlumnoModel:
         cursor.close()
         conn.close()
     
-    def crear_asistencia(self, id_alumno, fecha, estado):
+    def crear_asistencia(self, id_alumno, fecha, estado, id_materia):
         conn = self.db.get_connection()
         cursor = conn.cursor()
         query = """
-        INSERT INTO asistencias (id_alumno, fecha, estado)
-        VALUES (%s, %s, %s)
+        INSERT INTO asistencias (id_alumno, id_materia, fecha, estado)
+        VALUES (%s, %s, %s, %s)
         """
-        cursor.execute(query, (id_alumno, fecha, estado))
+        cursor.execute(query, (id_alumno, id_materia, fecha, estado))
         conn.commit()
         cursor.close()
         conn.close()
-    
-    def obtener_asistencias_alumno(self, id_alumno):
+        
+    def obtener_asistencias_alumno(self, id_alumno, id_materia=None):
         conn = self.db.get_connection()
         cursor = conn.cursor(dictionary=True)
-        query = """
-        SELECT fecha, estado
-        FROM asistencias
-        WHERE id_alumno = %s
-        ORDER BY fecha DESC
-        """
-        cursor.execute(query, (id_alumno,))
+        if id_materia:
+            query = """
+            SELECT a.fecha, a.estado, m.nombre_materia
+            FROM asistencias a
+            JOIN materias m ON a.id_materia = m.id_materia
+            WHERE a.id_alumno = %s AND a.id_materia = %s
+            ORDER BY a.fecha DESC
+            """
+            cursor.execute(query, (id_alumno, id_materia))
+        else:
+            query = """
+            SELECT a.fecha, a.estado, m.nombre_materia
+            FROM asistencias a
+            JOIN materias m ON a.id_materia = m.id_materia
+            WHERE a.id_alumno = %s
+            ORDER BY a.fecha DESC
+            """
+            cursor.execute(query, (id_alumno,))
         asistencias = cursor.fetchall()
         cursor.close()
         conn.close()

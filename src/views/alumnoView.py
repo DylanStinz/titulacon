@@ -22,48 +22,6 @@ def AlumnoView(page, alumno_controller, grupo_controller):
 
     grupo_actual = None
 
-    # ========== Asistencias ==========
-    fecha_asistencia = ft.DatePicker()
-    page.overlay.append(fecha_asistencia)
-    estado_asistencia = ft.Dropdown(
-        label="Estado",
-        width=200,
-        options=[
-            ft.dropdown.Option("Asistió"),
-            ft.dropdown.Option("Falta"),
-            ft.dropdown.Option("Retardo"),
-        ],
-        border_color=VINO_PRINCIPAL,
-        focused_border_color=VINO_OSCURO,
-        bgcolor=BLANCO,
-    )
-
-    def guardar_asistencia(alumno_id):
-        if not fecha_asistencia.value or not estado_asistencia.value:
-            page.snack_bar = ft.SnackBar(ft.Text("⚠️ Selecciona fecha y estado", color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
-            page.snack_bar.open = True
-            page.update()
-            return
-
-        fecha = fecha_asistencia.value
-        if hasattr(fecha, 'date'):
-            fecha = fecha.date()
-        
-        alumno_controller.crear_asistencia(alumno_id, fecha, estado_asistencia.value)
-
-        page.snack_bar = ft.SnackBar(ft.Text("✅ Asistencia guardada", color=ft.colors.BLACK), bgcolor=ft.colors.GREY_200)
-        page.snack_bar.open = True
-        page.update()
-        
-        fecha_asistencia.value = None
-        estado_asistencia.value = None
-        mostrar_info(None)
-
-    def abrir_fecha(e):
-        fecha_asistencia.pick_date()
-        page.update()
-    # =================================
-
     # ========== Dar de baja alumno ==========
     def dar_de_baja(alumno_id, alumno_nombre):
         def confirmar_baja(e):
@@ -140,7 +98,9 @@ def AlumnoView(page, alumno_controller, grupo_controller):
         p2_mostrar = "Pendiente" if p2 == 0 else p2
         p3_mostrar = "Pendiente" if p3 == 0 else p3
 
+        # Obtener todas las asistencias del alumno (sin filtrar por materia)
         asistencias = alumno_controller.obtener_asistencias_alumno(alumno["id_alumno"])
+        
         presentes = len([a for a in asistencias if a["estado"] == "Asistió"])
         faltas = len([a for a in asistencias if a["estado"] == "Falta"])
         retardos = len([a for a in asistencias if a["estado"] == "Retardo"])
@@ -153,7 +113,8 @@ def AlumnoView(page, alumno_controller, grupo_controller):
                 fecha_str = fecha.strftime("%d/%m/%Y")
             else:
                 fecha_str = str(fecha)
-            historial_textos.append(ft.Text(f"📆 {fecha_str} - {a['estado']}", size=14))
+            materia_nombre = a.get('nombre_materia', 'Sin materia')
+            historial_textos.append(ft.Text(f"📆 {fecha_str} - {a['estado']} ({materia_nombre})", size=14))
         if not historial_textos:
             historial_textos.append(ft.Text("No hay registros de asistencia", italic=True, color=VINO_CLARO))
 
@@ -192,7 +153,7 @@ def AlumnoView(page, alumno_controller, grupo_controller):
                         ft.Text(f"👥 Grupo: {alumno.get('grupo', '')}", size=15, color=VINO_OSCURO),
                         ft.Text(f"📚 Semestre: {alumno.get('semestre', '')}", size=15, color=VINO_OSCURO),
                         ft.Text(f"💻 Especialidad: {alumno.get('especialidad', '')}", size=15, color=VINO_OSCURO),
-                        ft.Text(f"📖 Materia: {grupo_actual.get('materia', 'Sin materia')}", size=15, color=VINO_OSCURO),                        ft.Text(f"⚡ Estatus: {alumno.get('estatus', 'Activo')}", size=15, color=VINO_OSCURO),
+                        ft.Text(f"⚡ Estatus: {alumno.get('estatus', 'Activo')}", size=15, color=VINO_OSCURO),
                         ft.Divider(),
                         ft.Text("📖 CALIFICACIONES", size=16, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
                         ft.Text(f"Parcial 1: {p1_mostrar}", size=15, color=VINO_OSCURO),
@@ -206,16 +167,6 @@ def AlumnoView(page, alumno_controller, grupo_controller):
                         ft.Text(f"⚠️ Retardos: {retardos}", size=14, color=VINO_OSCURO),
                         ft.Text(f"❌ Faltas: {faltas}", size=14, color=VINO_OSCURO),
                         ft.Text(f"📅 Total registros: {total_asistencias}", size=14, color=VINO_PRINCIPAL),
-                        ft.Divider(),
-                        ft.Text("📌 REGISTRAR ASISTENCIA", weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
-                        ft.Row(
-                            [
-                                ft.ElevatedButton("📅 Elegir fecha", on_click=abrir_fecha, icon=ft.icons.CALENDAR_MONTH),
-                                estado_asistencia,
-                                ft.ElevatedButton("💾 Guardar", on_click=lambda e: guardar_asistencia(alumno["id_alumno"]), icon=ft.icons.SAVE),
-                            ],
-                            spacing=10
-                        ),
                         ft.Divider(),
                         ft.Text("📅 HISTORIAL DE ASISTENCIAS", weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
                     ] + historial_textos,
@@ -286,8 +237,6 @@ def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
             dlg_especialidad = ft.TextField(label="Especialidad", width=200)
             dlg_materia = ft.TextField(label="Materia", width=200)
             dlg_turno = ft.Dropdown(label="Turno", width=200, options=[ft.dropdown.Option("Matutino"), ft.dropdown.Option("Vespertino")], value="Matutino")
-            
-
 
             def on_import_confirmar(e):
                 grado_val = dlg_grado.value

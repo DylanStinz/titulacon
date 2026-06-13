@@ -10,11 +10,144 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
     grupo_actual = None
     riesgos_container = ft.Column(spacing=15)
 
-    def cargar_riesgos():
+    # ----- Tabla de todos los alumnos del grupo (para asignación masiva) -----
+    alumnos_data = []  # (dropdown_riesgo, id_alumno)
+    data_table = ft.DataTable(
+        columns=[
+            ft.DataColumn(ft.Text("Alumno", weight=ft.FontWeight.BOLD, color=VINO_OSCURO, size=14)),
+            ft.DataColumn(ft.Text("Matrícula", weight=ft.FontWeight.BOLD, color=VINO_OSCURO, size=14)),
+            ft.DataColumn(ft.Text("Nivel de Riesgo", weight=ft.FontWeight.BOLD, color=VINO_OSCURO, size=14)),
+        ],
+        column_spacing=30,
+        heading_row_height=50,
+        data_row_max_height=60,
+        rows=[],
+        border=ft.border.all(1, VINO_CLARO),
+        border_radius=10,
+        horizontal_lines=ft.BorderSide(1, VINO_CLARO),
+    )
+
+    def obtener_nivel_riesgo_alumno(id_alumno):
+        """Obtiene el nivel de riesgo actual de un alumno (si tiene registro)"""
         riesgos = riesgo_controller.obtener_riesgos()
-        
+        for r in riesgos:
+            if r["id_alumno"] == id_alumno:
+                return r["nivel_riesgo"]
+        return None
+
+    def cargar_alumnos_riesgo():
+        """Carga la tabla con todos los alumnos del grupo actual y su nivel de riesgo actual"""
+        if not grupo_actual:
+            data_table.rows = []
+            page.update()
+            return
+        # Obtener todos los alumnos
+        todos = alumno_controller.obtener_alumnos()
+        # Filtrar por semestre y grupo (usando los campos reales de la tabla alumnos)
+        # grupo_actual["grado"] es el número de semestre (ej: "6")
+        # grupo_actual["grupo"] es la letra (ej: "D")
+        filtrados = [
+            a for a in todos 
+            if str(a.get("semestre", "")) == str(grupo_actual.get("grado", "")) 
+            and a.get("grupo", "") == grupo_actual.get("grupo", "")
+            and a.get("estatus", "Activo") == "Activo"
+        ]
+
+        rows = []
+        alumnos_data.clear()
+        for alumno in filtrados:
+            nivel_actual = obtener_nivel_riesgo_alumno(alumno["id_alumno"])
+            # Círculo de color según nivel
+            color_circulo = {
+                "Bajo": "#4CAF50",
+                "Medio": "#FF9800",
+                "Alto": "#F44336"
+            }.get(nivel_actual, "#999") if nivel_actual else "#999"
+
+            dropdown_riesgo = ft.Dropdown(
+                width=160,
+                options=[
+                    ft.dropdown.Option("Bajo"),
+                    ft.dropdown.Option("Medio"),
+                    ft.dropdown.Option("Alto"),
+                ],
+                value=nivel_actual,
+                border_color=VINO_PRINCIPAL,
+                focused_border_color=VINO_OSCURO,
+                bgcolor=BLANCO,
+                border_radius=8,
+                filled=True,
+                fill_color=GRIS_SUAVE,
+            )
+            rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(f"{alumno['nombre']} {alumno['apellido_paterno']}", size=14)),
+                        ft.DataCell(ft.Text(alumno['matricula'], size=14, color=VINO_CLARO)),
+                        ft.DataCell(
+                            ft.Row(
+                                [
+                                    ft.Container(width=12, height=12, bgcolor=color_circulo, border_radius=6),
+                                    dropdown_riesgo,
+                                ],
+                                spacing=8,
+                                alignment=ft.MainAxisAlignment.START,
+                            )
+                        ),
+                    ]
+                )
+            )
+            alumnos_data.append((dropdown_riesgo, alumno["id_alumno"]))
+        data_table.rows = rows
+        page.update()
+
+    def guardar_riesgos_masivos(e):
+        """Guarda (crea o actualiza) los niveles de riesgo de todos los alumnos de la tabla"""
+        if not grupo_actual:
+            page.snack_bar = ft.SnackBar(ft.Text("Selecciona un grupo primero"), bgcolor=GRIS_SUAVE)
+            page.snack_bar.open = True
+            page.update()
+            return
+        if not alumnos_data:
+            page.snack_bar = ft.SnackBar(ft.Text("No hay alumnos en este grupo"), bgcolor=GRIS_SUAVE)
+            page.snack_bar.open = True
+            page.update()
+            return
+
+        for dropdown_riesgo, id_alumno in alumnos_data:
+            nivel = dropdown_riesgo.value
+            if not nivel:
+                continue
+            # Verificar si ya existe un registro de riesgo para este alumno
+            existe = None
+            for r in riesgo_controller.obtener_riesgos():
+                if r["id_alumno"] == id_alumno:
+                    existe = r
+                    break
+            if existe:
+                # Actualizar solo el nivel (motivo y seguimiento se mantienen)
+                riesgo_controller.actualizar_riesgo(
+                    existe["id_riesgo"],
+                    nivel,
+                    existe["motivo"],
+                    existe.get("seguimiento", "")
+                )
+            else:
+                # Crear un nuevo registro con motivo genérico
+                motivo = f"Asignación automática desde grupo {grupo_actual['grado']}° {grupo_actual['grupo']}"
+                riesgo_controller.guardar_riesgo(id_alumno, nivel, motivo, "")
+
+        page.snack_bar = ft.SnackBar(ft.Text("✅ Riesgos actualizados masivamente"), bgcolor=GRIS_SUAVE)
+        page.snack_bar.open = True
+        page.update()
+        # Refrescar ambas secciones
+        cargar_riesgos_individuales()
+        cargar_alumnos_riesgo()
+
+    # ----- Lista de registros individuales (sin cambios relevantes) -----
+    def cargar_riesgos_individuales():
+        riesgos = riesgo_controller.obtener_riesgos()
         riesgos_container.controls.clear()
-        
         if not riesgos:
             riesgos_container.controls.append(
                 ft.Container(
@@ -31,7 +164,6 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
                     "Medio": "#FF9800",
                     "Alto": "#F44336"
                 }.get(r["nivel_riesgo"], VINO_PRINCIPAL)
-                
                 tarjeta = ft.Card(
                     elevation=3,
                     color=BLANCO,
@@ -94,17 +226,16 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
                     ),
                 )
                 riesgos_container.controls.append(tarjeta)
-        
         page.update()
 
+    # ----- Formulario individual (sin cambios relevantes) -----
     def abrir_formulario_riesgo(riesgo=None):
         alumnos_list = alumno_controller.obtener_alumnos()
-        
         if grupo_actual:
-            alumnos_filtrados = [a for a in alumnos_list if str(a.get("grado", "")) == str(grupo_actual["grado"]) and a.get("grupo", "") == grupo_actual["grupo"]]
+            alumnos_filtrados = [a for a in alumnos_list if str(a.get("semestre", "")) == str(grupo_actual["grado"]) and a.get("grupo", "") == grupo_actual["grupo"]]
         else:
             alumnos_filtrados = alumnos_list
-        
+
         alumno_dropdown = ft.Dropdown(
             label="Alumno",
             width=400,
@@ -117,7 +248,6 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
             bgcolor=BLANCO,
             border_radius=12,
         )
-        
         nivel_riesgo = ft.Dropdown(
             label="Nivel de Riesgo",
             width=400,
@@ -131,7 +261,6 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
             bgcolor=BLANCO,
             border_radius=12,
         )
-        
         motivo = ft.TextField(
             label="Motivo",
             multiline=True,
@@ -140,7 +269,6 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
             width=400,
             border_color=VINO_PRINCIPAL,
         )
-        
         seguimiento = ft.TextField(
             label="Seguimiento (opcional)",
             multiline=True,
@@ -149,7 +277,7 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
             width=400,
             border_color=VINO_PRINCIPAL,
         )
-        
+
         if riesgo:
             alumno_dropdown.value = str(riesgo["id_alumno"])
             nivel_riesgo.value = riesgo["nivel_riesgo"]
@@ -165,19 +293,17 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
                 page.snack_bar.open = True
                 page.update()
                 return
-            
             if not nivel_riesgo.value:
                 page.snack_bar = ft.SnackBar(ft.Text("⚠️ Selecciona el nivel de riesgo"), bgcolor=GRIS_SUAVE)
                 page.snack_bar.open = True
                 page.update()
                 return
-            
             if not motivo.value:
                 page.snack_bar = ft.SnackBar(ft.Text("⚠️ Escribe el motivo"), bgcolor=GRIS_SUAVE)
                 page.snack_bar.open = True
                 page.update()
                 return
-            
+
             if riesgo:
                 ok, msg = riesgo_controller.actualizar_riesgo(
                     riesgo["id_riesgo"],
@@ -192,13 +318,14 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
                     motivo.value,
                     seguimiento.value
                 )
-            
+
             page.snack_bar = ft.SnackBar(ft.Text(msg), bgcolor=GRIS_SUAVE)
             page.snack_bar.open = True
             dialog.open = False
-            cargar_riesgos()
+            cargar_riesgos_individuales()
+            cargar_alumnos_riesgo()
             page.update()
-        
+
         dialog = ft.AlertDialog(
             title=ft.Text(titulo, color=VINO_PRINCIPAL),
             content=ft.Container(
@@ -227,9 +354,10 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
             page.snack_bar = ft.SnackBar(ft.Text(msg), bgcolor=GRIS_SUAVE)
             page.snack_bar.open = True
             dialog.open = False
-            cargar_riesgos()
+            cargar_riesgos_individuales()
+            cargar_alumnos_riesgo()
             page.update()
-        
+
         dialog = ft.AlertDialog(
             title=ft.Text("⚠️ Confirmar eliminación", color=VINO_OSCURO),
             content=ft.Text(f"¿Eliminar el registro de riesgo para {riesgo['nombre']}?"),
@@ -245,8 +373,10 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
     def actualizar_por_grupo(grupo):
         nonlocal grupo_actual
         grupo_actual = grupo
-        cargar_riesgos()
+        cargar_riesgos_individuales()
+        cargar_alumnos_riesgo()
 
+    # ----- Layout final -----
     content = ft.Column(
         [
             ft.Text("⚠️ Riesgo Académico", size=30, weight=ft.FontWeight.BOLD, color=VINO_PRINCIPAL),
@@ -260,8 +390,23 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
                         bgcolor=VINO_PRINCIPAL,
                         color=BLANCO,
                     ),
+                    ft.ElevatedButton(
+                        "💾 Guardar todos los riesgos",
+                        on_click=guardar_riesgos_masivos,
+                        icon=ft.icons.SAVE,
+                        bgcolor=VINO_OSCURO,
+                        color=BLANCO,
+                    ),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
+                spacing=20,
+            ),
+            ft.Divider(),
+            ft.Text("📋 Lista de Alumnos del Grupo", size=20, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+            ft.Container(
+                content=ft.Column([data_table], scroll=ft.ScrollMode.AUTO),
+                height=400,
+                padding=10,
             ),
             ft.Divider(),
             ft.Text("📋 Registros de Riesgo Académico", size=20, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
@@ -271,7 +416,7 @@ def RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller):
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         scroll=ft.ScrollMode.AUTO,
     )
-    
+
     container = ft.Container(content=content)
     container.actualizar_por_grupo = actualizar_por_grupo
     return container

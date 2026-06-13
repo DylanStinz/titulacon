@@ -195,14 +195,14 @@ class AlumnoController:
         wb.save(archivo)
         return archivo
 
-    def obtener_asistencias_alumno(self, id_alumno):
-        return self.model.obtener_asistencias_alumno(id_alumno)
-
-    def crear_asistencia(self, id_alumno, fecha, estado):
+    def crear_asistencia(self, id_alumno, fecha, estado, id_materia):
         if hasattr(fecha, 'date'):
             fecha = fecha.date()
-        self.model.crear_asistencia(id_alumno, fecha, estado)
+        self.model.crear_asistencia(id_alumno, fecha, estado, id_materia)
         return True, "Asistencia registrada correctamente"
+
+    def obtener_asistencias_alumno(self, id_alumno, id_materia=None):
+        return self.model.obtener_asistencias_alumno(id_alumno, id_materia)
 
     def corregir_nombres_existentes(self):
         alumnos = self.model.listar_alumnos()

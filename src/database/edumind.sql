@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `alumnos` (
   `estatus` enum('Activo','Reprobado','Baja') DEFAULT 'Activo',
   PRIMARY KEY (`id_alumno`),
   UNIQUE KEY `matricula` (`matricula`)
-) ENGINE=InnoDB AUTO_INCREMENT=159 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=208 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -43,12 +43,15 @@ CREATE TABLE IF NOT EXISTS `alumnos` (
 CREATE TABLE IF NOT EXISTS `asistencias` (
   `id_asistencia` int NOT NULL AUTO_INCREMENT,
   `id_alumno` int NOT NULL,
+  `id_materia` int DEFAULT NULL,
   `fecha` date NOT NULL,
   `estado` enum('Asistió','Falta','Retardo') NOT NULL,
   PRIMARY KEY (`id_asistencia`),
   KEY `id_alumno` (`id_alumno`),
-  CONSTRAINT `asistencias_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `fk_asistencias_materia` (`id_materia`),
+  CONSTRAINT `asistencias_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
+  CONSTRAINT `fk_asistencias_materia` FOREIGN KEY (`id_materia`) REFERENCES `materias` (`id_materia`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -82,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `docentes` (
   PRIMARY KEY (`id_docente`),
   UNIQUE KEY `correo` (`correo`),
   UNIQUE KEY `usuario` (`usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -95,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `grupos` (
   `turno` varchar(50) NOT NULL,
   `materia` varchar(100) NOT NULL,
   PRIMARY KEY (`id_grupo`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -106,7 +109,7 @@ CREATE TABLE IF NOT EXISTS `materias` (
   `semestre` int NOT NULL,
   `especialidad` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id_materia`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- La exportación de datos fue deseleccionada.
 
@@ -152,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `riesgo_academico` (
   PRIMARY KEY (`id_riesgo`),
   KEY `id_alumno` (`id_alumno`),
   CONSTRAINT `riesgo_academico_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- La exportación de datos fue deseleccionada.
 

@@ -6,6 +6,7 @@ from views.riesgoView import RiesgoView
 from views.actividadesView import ActividadesView
 from controllers.ActividadController import ActividadController
 from views.altaAlumnoView import AltaAlumnoView
+from views.asistenciasView import AsistenciasView 
 
 def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller, calificacion_controller, reporte_controller):
     VINO_PRINCIPAL = "#722F37"
@@ -62,7 +63,8 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
             vista_riesgos.actualizar_por_grupo(grupo_dict)
         if hasattr(vista_actividades, 'actualizar_por_grupo'):
             vista_actividades.actualizar_por_grupo(grupo_dict)
-        
+        if hasattr(vista_asistencias, 'actualizar_por_grupo'):
+            vista_asistencias.actualizar_por_grupo(grupo_dict)
         page.update()
 
     vista_grupos = GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado)
@@ -71,6 +73,7 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
     vista_reportes = ReporteView(page, alumno_controller, reporte_controller, grupo_controller)
     vista_riesgos = RiesgoView(page, riesgo_controller, alumno_controller, grupo_controller)
     vista_actividades = ActividadesView(page, actividad_controller, grupo_controller)
+    vista_asistencias = AsistenciasView(page, alumno_controller, grupo_controller)
     vista_alta_alumno = AltaAlumnoView(page, alumno_controller, grupo_controller)
     tabs = ft.Tabs(
         selected_index=0,
@@ -82,7 +85,7 @@ def MenuView(page, alumno_controller, grupo_controller, estadisticas_controller,
             ft.Tab(text="⚠️ Riesgo Académico", icon=ft.icons.WARNING, content=ft.Container(content=vista_riesgos, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📝 Actividades", icon=ft.icons.ASSIGNMENT, content=ft.Container(content=vista_actividades, padding=20, alignment=ft.alignment.top_center)),
             ft.Tab(text="📝 Alta de Alumnos", icon=ft.icons.ADD, content=ft.Container(content=vista_alta_alumno, padding=20, alignment=ft.alignment.top_center)),
-
+            ft.Tab(text="📋 Asistencias", icon=ft.icons.CHECKLIST, content=ft.Container(content=vista_asistencias, padding=20, alignment=ft.alignment.top_center)),
         ],
         expand=True,
         indicator_color=VINO_PRINCIPAL,
