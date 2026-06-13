@@ -1,11 +1,20 @@
 import flet as ft
 
-def GrupoView(page, grupo_controller):
+def GrupoView(page, grupo_controller, alumno_controller, on_grupo_seleccionado):
     VINO_PRINCIPAL = "#722F37"
     VINO_OSCURO = "#4A1C22"
     VINO_CLARO = "#9B4B55"
     BLANCO = "#FFFFFF"
     GRIS_MUY_SUAVE = "#FAFAFA"
+
+    estilo_dropdown = {
+        "border_color": VINO_PRINCIPAL,
+        "focused_border_color": VINO_OSCURO,
+        "bgcolor": BLANCO,
+        "border_radius": 12,
+        "filled": True,
+        "fill_color": GRIS_MUY_SUAVE,
+    }
 
     estilo_textfield = {
         "border_color": VINO_PRINCIPAL,
@@ -17,15 +26,40 @@ def GrupoView(page, grupo_controller):
         "fill_color": GRIS_MUY_SUAVE,
     }
 
-    estilo_dropdown = {
-        "border_color": VINO_PRINCIPAL,
-        "focused_border_color": VINO_OSCURO,
-        "bgcolor": BLANCO,
-        "border_radius": 12,
-        "filled": True,
-        "fill_color": GRIS_MUY_SUAVE,
-    }
+    # ---------- DROPDOWN DE SELECCIÓN DE GRUPO ----------
+    dropdown_grupos = ft.Dropdown(
+        label="Seleccionar grupo",
+        width=300,
+        hint_text="Elige un grado y grupo",
+        **estilo_dropdown,
+    )
 
+    def actualizar_dropdown_grupos():
+        grupos = grupo_controller.obtener_grupos()
+        opciones = []
+        for g in grupos:
+            opciones.append(
+                ft.dropdown.Option(
+                    key=str(g["id_grupo"]),
+                    text=f"{g['grado']}° {g['grupo']} - {g['especialidad']} ({g['turno']})",
+                    data=g
+                )
+            )
+        dropdown_grupos.options = opciones
+        page.update()
+
+    def on_dropdown_change(e):
+        if dropdown_grupos.value:
+            grupo_data = next(
+                (opt.data for opt in dropdown_grupos.options if opt.key == dropdown_grupos.value),
+                None
+            )
+            if grupo_data and on_grupo_seleccionado:
+                on_grupo_seleccionado(grupo_data)
+
+    dropdown_grupos.on_change = on_dropdown_change
+
+    # ---------- FORMULARIO DE REGISTRO / EDICIÓN ----------
     grado = ft.Dropdown(
         label="Grado",
         width=160,
@@ -50,7 +84,7 @@ def GrupoView(page, grupo_controller):
         grupos = grupo_controller.obtener_grupos()
 
         for g in grupos:
-            alumnos = grupo_controller.obtener_alumnos_grupo(g["grupo"])
+            alumnos = grupo_controller.obtener_alumnos_grupo(g["grupo"])  # o usa id_grupo
 
             def editar_grupo(e, grupo_data=g):
                 grupo_editando["id"] = grupo_data["id_grupo"]
@@ -104,7 +138,7 @@ def GrupoView(page, grupo_controller):
                             content=ft.Column(
                                 [
                                     ft.Dropdown(
-                                        label="Lista de alumnos",
+                                        label="Alumnos del grupo",
                                         width=300,
                                         options=[
                                             ft.dropdown.Option(f"{a['nombre']} {a['apellido_paterno']}")
@@ -122,6 +156,15 @@ def GrupoView(page, grupo_controller):
                                             shape=ft.RoundedRectangleBorder(radius=30),
                                         ),
                                     ),
+                                    ft.ElevatedButton(
+                                        "Seleccionar este grupo",
+                                        on_click=lambda e, g=g: on_grupo_seleccionado(g) if on_grupo_seleccionado else None,
+                                        style=ft.ButtonStyle(
+                                            color=BLANCO,
+                                            bgcolor=VINO_PRINCIPAL,
+                                            shape=ft.RoundedRectangleBorder(radius=30),
+                                        ),
+                                    ),
                                 ],
                                 spacing=12,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -133,6 +176,7 @@ def GrupoView(page, grupo_controller):
             )
             lista_grupos.controls.append(tarjeta)
 
+        actualizar_dropdown_grupos()
         page.update()
 
     def guardar_grupo(e):
@@ -181,26 +225,36 @@ def GrupoView(page, grupo_controller):
 
         page.update()
 
+    # Cargar grupos al inicio
     cargar_grupos()
 
-    return ft.View(
-        route="/dashboard",
+    # Retornar un control (Column) que se usará dentro del Tab
+    return ft.Column(
         scroll=ft.ScrollMode.AUTO,
-        bgcolor=GRIS_MUY_SUAVE,
-        appbar=ft.AppBar(
-            title=ft.Text("Gestión de Grupos", color=BLANCO, size=22, weight=ft.FontWeight.BOLD),
-            bgcolor=VINO_PRINCIPAL,
-            center_title=True,
-            elevation=4,
-        ),
         controls=[
             ft.Container(
-                padding=ft.padding.symmetric(horizontal=40, vertical=30),
+                padding=ft.padding.symmetric(horizontal=40, vertical=20),
                 content=ft.Column(
                     [
+                        # Selector de grupo (dropdown)
+                        ft.Container(
+                            padding=20,
+                            bgcolor=BLANCO,
+                            border_radius=20,
+                            shadow=ft.BoxShadow(blur_radius=8, color="#D3D3D3", offset=ft.Offset(0, 2)),
+                            content=ft.Column(
+                                [
+                                    ft.Text("Seleccionar un grupo existente", size=18, weight=ft.FontWeight.BOLD, color=VINO_OSCURO),
+                                    dropdown_grupos,
+                                ],
+                                spacing=15,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            ),
+                        ),
+                        ft.Divider(color=VINO_CLARO, height=2, thickness=1),
                         ft.Text(
                             "Registrar nuevo grupo",
-                            size=30,
+                            size=28,
                             weight=ft.FontWeight.BOLD,
                             color=VINO_OSCURO,
                         ),
@@ -208,11 +262,7 @@ def GrupoView(page, grupo_controller):
                             padding=20,
                             bgcolor=BLANCO,
                             border_radius=20,
-                            shadow=ft.BoxShadow(
-                                blur_radius=8,
-                                color="#D3D3D3",
-                                offset=ft.Offset(0, 2),
-                            ),
+                            shadow=ft.BoxShadow(blur_radius=8, color="#D3D3D3", offset=ft.Offset(0, 2)),
                             content=ft.Column(
                                 [
                                     ft.Row([grado, grupo], alignment=ft.MainAxisAlignment.CENTER, spacing=20),
@@ -233,32 +283,6 @@ def GrupoView(page, grupo_controller):
                                 spacing=20,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             ),
-                        ),
-                        ft.Row(
-                            [
-                                ft.ElevatedButton(
-                                    "Ir a alumnos",
-                                    on_click=lambda _: page.go("/alumnos"),
-                                    style=ft.ButtonStyle(
-                                        color=VINO_PRINCIPAL,
-                                        bgcolor=BLANCO,
-                                        side=ft.BorderSide(1.5, VINO_PRINCIPAL),
-                                        shape=ft.RoundedRectangleBorder(radius=30),
-                                    ),
-                                ),
-                                ft.ElevatedButton(
-                                    "Estadísticas",
-                                    on_click=lambda _: page.go("/estadisticas"),
-                                    style=ft.ButtonStyle(
-                                        color=VINO_PRINCIPAL,
-                                        bgcolor=BLANCO,
-                                        side=ft.BorderSide(1.5, VINO_PRINCIPAL),
-                                        shape=ft.RoundedRectangleBorder(radius=30),
-                                    ),
-                                ),
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            spacing=20,
                         ),
                         ft.Divider(color=VINO_CLARO, height=2, thickness=1),
                         ft.Text(
